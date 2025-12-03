@@ -9,6 +9,8 @@ import TopSellingProducts from '../components/Dashboard/TopSellingProducts';
 import SupplierPerformance from '../components/Dashboard/SupplierPerformance';
 import UsageStats from '../components/Dashboard/UsageStats';
 import { Settings, BarChart3, AlertTriangle, TrendingUp, ShoppingCart, Users, Activity } from 'lucide-react';
+import PhysicalSalesPricingCalculator from '../components/Inventory/PhysicalSalesPricingCalculator';
+import DetailedInventoryInfo from '../components/Inventory/DetailedInventoryInfo';
 
 const Dashboard: React.FC = () => {
   const { products, transactions, clients, suppliers, purchaseOrders } = useLocalDatabase();
@@ -342,44 +344,56 @@ const Dashboard: React.FC = () => {
         )}
 
         {activeTab === 'pricing' && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-            {preferences.dashboard.widgetOrder
-              .filter(widgetId => preferences.dashboard.visibleWidgets.includes(widgetId))
-              .map(widgetId => {
-                const widget = widgets[widgetId as keyof typeof widgets];
-                if (!widget) return null;
-                
-                // Somente mostrar widgets relevantes para a aba pricing
-                if (['supplier-performance'].includes(widgetId)) {
-                  return (
-                    <div key={widgetId} className={`${preferences.display.compactMode ? 'p-3' : 'p-4'} bg-white dark:bg-gray-800 rounded-lg shadow-sm`}>
-                      {widget.component}
-                    </div>
-                  );
-                }
-                return null;
-              })}
+          <div className="space-y-6">
+            {/* Calculadora de precificação para vendas físicas */}
+            <PhysicalSalesPricingCalculator />
+            
+            {/* Widgets de precificação existentes */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+              {preferences.dashboard.widgetOrder
+                .filter(widgetId => preferences.dashboard.visibleWidgets.includes(widgetId))
+                .map(widgetId => {
+                  const widget = widgets[widgetId as keyof typeof widgets];
+                  if (!widget) return null;
+                  
+                  // Somente mostrar widgets relevantes para a aba pricing
+                  if (['supplier-performance'].includes(widgetId)) {
+                    return (
+                      <div key={widgetId} className={`${preferences.display.compactMode ? 'p-3' : 'p-4'} bg-white dark:bg-gray-800 rounded-lg shadow-sm`}>
+                        {widget.component}
+                      </div>
+                    );
+                  }
+                  return null;
+                })}
+            </div>
           </div>
         )}
 
         {activeTab === 'inventory' && (
-          <div className="grid grid-cols-1 gap-4 md:gap-6">
-            {preferences.dashboard.widgetOrder
-              .filter(widgetId => preferences.dashboard.visibleWidgets.includes(widgetId))
-              .map(widgetId => {
-                const widget = widgets[widgetId as keyof typeof widgets];
-                if (!widget) return null;
-                
-                // Somente mostrar widgets relevantes para a aba inventory
-                if (['low-stock-alerts'].includes(widgetId)) {
-                  return (
-                    <div key={widgetId} className={`${preferences.display.compactMode ? 'p-3' : 'p-4'} bg-white dark:bg-gray-800 rounded-lg shadow-sm`}>
-                      {widget.component}
-                    </div>
-                  );
-                }
-                return null;
-              })}
+          <div className="space-y-6">
+            {/* Informações detalhadas do estoque */}
+            <DetailedInventoryInfo />
+            
+            {/* Widgets de estoque existentes */}
+            <div className="grid grid-cols-1 gap-4 md:gap-6">
+              {preferences.dashboard.widgetOrder
+                .filter(widgetId => preferences.dashboard.visibleWidgets.includes(widgetId))
+                .map(widgetId => {
+                  const widget = widgets[widgetId as keyof typeof widgets];
+                  if (!widget) return null;
+                  
+                  // Somente mostrar widgets relevantes para a aba inventory
+                  if (['low-stock-alerts'].includes(widgetId)) {
+                    return (
+                      <div key={widgetId} className={`${preferences.display.compactMode ? 'p-3' : 'p-4'} bg-white dark:bg-gray-800 rounded-lg shadow-sm`}>
+                        {widget.component}
+                      </div>
+                    );
+                  }
+                  return null;
+                })}
+            </div>
           </div>
         )}
       </div>
