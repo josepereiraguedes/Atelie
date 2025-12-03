@@ -1,12 +1,13 @@
-import { useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useKeyboardShortcuts } from './useKeyboardShortcuts';
-import { useUserActionHistory } from './useUserActionHistory';
+import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts';
+import { useUserActionHistory } from '../hooks/useUserActionHistory';
 
 /**
- * Hook para registrar os atalhos de teclado padrão do sistema
+ * Componente para gerenciar os atalhos de teclado padrão do sistema
+ * Deve ser usado dentro do contexto de um Router
  */
-export const useDefaultShortcuts = () => {
+const KeyboardShortcutsManager: React.FC = () => {
   const navigate = useNavigate();
   const { registerShortcut } = useKeyboardShortcuts();
   const { recordAction } = useUserActionHistory();
@@ -137,4 +138,8 @@ export const useDefaultShortcuts = () => {
       cleanupFunctions.forEach(cleanup => cleanup());
     };
   }, [navigate, registerShortcut, recordAction]);
+
+  return null;
 };
+
+export default KeyboardShortcutsManager;
