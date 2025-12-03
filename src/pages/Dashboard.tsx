@@ -294,24 +294,51 @@ const Dashboard: React.FC = () => {
       {/* Conteúdo do dashboard baseado na aba ativa e nas preferências */}
       <div className={`${preferences.display.compactMode ? 'space-y-3' : 'space-y-6'}`}>
         {activeTab === 'overview' && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-            {preferences.dashboard.widgetOrder
-              .filter(widgetId => preferences.dashboard.visibleWidgets.includes(widgetId))
-              .map(widgetId => {
-                const widget = widgets[widgetId as keyof typeof widgets];
-                if (!widget) return null;
-                
-                // Somente mostrar widgets relevantes para a aba overview
-                if (['stats-cards', 'low-stock-alerts', 'sales-chart', 'top-selling-products', 'usage-stats'].includes(widgetId)) {
+          <>
+            {/* Cards de estatísticas - ocupando largura total */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+              {preferences.dashboard.widgetOrder
+                .filter(widgetId => 
+                  preferences.dashboard.visibleWidgets.includes(widgetId) && 
+                  widgetId === 'stats-cards'
+                )
+                .map(widgetId => {
+                  const widget = widgets[widgetId as keyof typeof widgets];
+                  if (!widget) return null;
+                  
                   return (
-                    <div key={widgetId} className={`${preferences.display.compactMode ? 'p-3' : 'p-4'} bg-white dark:bg-gray-800 rounded-lg shadow-sm`}>
-                      {widget.component}
+                    <div key={widgetId} className="col-span-full">
+                      <div className={`${preferences.display.compactMode ? 'p-3' : 'p-4'} bg-white dark:bg-gray-800 rounded-lg shadow-sm`}>
+                        {widget.component}
+                      </div>
                     </div>
                   );
-                }
-                return null;
-              })}
-          </div>
+                })}
+            </div>
+            
+            {/* Demais widgets alinhados abaixo */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+              {preferences.dashboard.widgetOrder
+                .filter(widgetId => 
+                  preferences.dashboard.visibleWidgets.includes(widgetId) && 
+                  widgetId !== 'stats-cards'
+                )
+                .map(widgetId => {
+                  const widget = widgets[widgetId as keyof typeof widgets];
+                  if (!widget) return null;
+                  
+                  // Somente mostrar widgets relevantes para a aba overview
+                  if (['low-stock-alerts', 'sales-chart', 'top-selling-products', 'usage-stats'].includes(widgetId)) {
+                    return (
+                      <div key={widgetId} className={`${preferences.display.compactMode ? 'p-3' : 'p-4'} bg-white dark:bg-gray-800 rounded-lg shadow-sm`}>
+                        {widget.component}
+                      </div>
+                    );
+                  }
+                  return null;
+                })}
+            </div>
+          </>
         )}
 
         {activeTab === 'pricing' && (
