@@ -1,8 +1,8 @@
-version: 1.0.3
+version: 1.0.4
 files:
-  - url: sistema-gestao-estoque-setup-1.0.3.exe
-    sha512: 5Ufx3k2PKRolTXKYSonHw/b2v+NNTIcUtriCU1cHTQwfsm2Ka1z2pOQYY/xxUSiq0v5EYooiOiYYptKAWqcIQA==
-    size: 107821443
-path: sistema-gestao-estoque-setup-1.0.3.exe
-sha512: 5Ufx3k2PKRolTXKYSonHw/b2v+NNTIcUtriCU1cHTQwfsm2Ka1z2pOQYY/xxUSiq0v5EYooiOiYYptKAWqcIQA==
-releaseDate: '2025-12-02T23:38:20.362Z'
+  - url: sistema-gestao-estoque-setup-1.0.4.exe
+    sha512: Q8GRZYepPGyVCsgxPoxSDFL9fTO7PhhEMfhYcTsXSywrczvHCTOohRV72KMZORa5o2HpurvUBu4amaADsy1bAg==
+    size: 108516742
+path: sistema-gestao-estoque-setup-1.0.4.exe
+sha512: Q8GRZYepPGyVCsgxPoxSDFL9fTO7PhhEMfhYcTsXSywrczvHCTOohRV72KMZORa5o2HpurvUBu4amaADsy1bAg==
+releaseDate: '2025-12-03T04:42:09.180Z'

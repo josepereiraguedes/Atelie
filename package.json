@@ -1,7 +1,7 @@
 {
   "name": "sistema-gestao-estoque",
   "private": true,
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Sistema de Gestão de Estoque e Financeiro",
   "author": "Ateliê",
   "type": "module",
