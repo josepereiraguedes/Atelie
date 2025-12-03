@@ -3,6 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { usePreferences } from '../contexts/PreferencesContext';
 import { Camera, User, Lock, Save, X } from 'lucide-react';
 import toast from 'react-hot-toast';
+import UserActionHistory from './UserActionHistory';
 
 interface UserProfileSettingsProps {
   isOpen: boolean;
@@ -10,7 +11,7 @@ interface UserProfileSettingsProps {
 }
 
 const UserProfileSettings: React.FC<UserProfileSettingsProps> = ({ isOpen, onClose }) => {
-  const { user, updateUser } = useAuth();
+  const { user, updateUser, updateUserCredentials } = useAuth();
   const { preferences, updatePreferences } = usePreferences();
   const [name, setName] = useState(user?.name || '');
   const [email, setEmail] = useState(user?.email || '');
@@ -38,8 +39,7 @@ const UserProfileSettings: React.FC<UserProfileSettingsProps> = ({ isOpen, onClo
     try {
       // Atualizar perfil do usuário
       if (user) {
-        await updateUser({
-          ...user,
+        await updateUser(user.id, {
           name,
           email
         });
@@ -71,10 +71,7 @@ const UserProfileSettings: React.FC<UserProfileSettingsProps> = ({ isOpen, onClo
     try {
       // Atualizar senha do usuário
       if (user) {
-        await updateUser({
-          ...user,
-          password: newPassword // Na prática, isso seria feito de forma segura com hash
-        });
+        await updateUserCredentials(user.id, currentPassword, newPassword);
       }
       
       // Limpar campos de senha
@@ -118,9 +115,9 @@ const UserProfileSettings: React.FC<UserProfileSettingsProps> = ({ isOpen, onClo
                       alt="Preview do avatar" 
                       className="w-full h-full object-cover"
                     />
-                  ) : user?.avatar ? (
+                  ) : user?.avatar_url ? (
                     <img 
-                      src={user.avatar} 
+                      src={user.avatar_url || ''} 
                       alt={user.name} 
                       className="w-full h-full object-cover"
                     />
@@ -283,6 +280,16 @@ const UserProfileSettings: React.FC<UserProfileSettingsProps> = ({ isOpen, onClo
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+
+        {/* Histórico de Ações */}
+        <div>
+          <h3 className="font-medium text-gray-900 dark:text-white text-sm mb-3">
+            Histórico de Ações
+          </h3>
+          <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-3">
+            <UserActionHistory />
           </div>
         </div>
 

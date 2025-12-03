@@ -7,7 +7,8 @@ import LowStockAlerts from '../components/Dashboard/LowStockAlerts';
 import SalesChart from '../components/Dashboard/SalesChart';
 import TopSellingProducts from '../components/Dashboard/TopSellingProducts';
 import SupplierPerformance from '../components/Dashboard/SupplierPerformance';
-import { Settings, BarChart3, AlertTriangle, TrendingUp, ShoppingCart, Users } from 'lucide-react';
+import UsageStats from '../components/Dashboard/UsageStats';
+import { Settings, BarChart3, AlertTriangle, TrendingUp, ShoppingCart, Users, Activity } from 'lucide-react';
 
 const Dashboard: React.FC = () => {
   const { products, transactions, clients, suppliers, purchaseOrders } = useLocalDatabase();
@@ -217,6 +218,12 @@ const Dashboard: React.FC = () => {
       component: <SupplierPerformance suppliers={supplierPerformanceData} />,
       icon: Users,
       title: 'Fornecedores'
+    },
+    'usage-stats': {
+      id: 'usage-stats',
+      component: <UsageStats />,
+      icon: Activity,
+      title: 'Estatísticas de Uso'
     }
   };
 
@@ -295,7 +302,7 @@ const Dashboard: React.FC = () => {
                 if (!widget) return null;
                 
                 // Somente mostrar widgets relevantes para a aba overview
-                if (['stats-cards', 'low-stock-alerts', 'sales-chart', 'top-selling-products'].includes(widgetId)) {
+                if (['stats-cards', 'low-stock-alerts', 'sales-chart', 'top-selling-products', 'usage-stats'].includes(widgetId)) {
                   return (
                     <div key={widgetId} className={`${preferences.display.compactMode ? 'p-3' : 'p-4'} bg-white dark:bg-gray-800 rounded-lg shadow-sm`}>
                       {widget.component}

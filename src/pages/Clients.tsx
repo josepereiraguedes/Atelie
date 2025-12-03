@@ -4,9 +4,11 @@ import { Plus, Search, Edit, Trash2, Users, Mail, Phone, MapPin, MessageCircle }
 import { useLocalDatabase } from '../contexts/LocalDatabaseContext';
 import { handleError } from '../utils/errorHandler';
 import toast from 'react-hot-toast';
+import { useUserActionHistory } from '../hooks/useUserActionHistory';
 
 const Clients: React.FC = () => {
   const { clients, deleteClient } = useLocalDatabase();
+  const { recordAction } = useUserActionHistory();
   const [searchTerm, setSearchTerm] = useState('');
 
   const filteredClients = useMemo(() => {
@@ -22,6 +24,10 @@ const Clients: React.FC = () => {
       try {
         await deleteClient(id);
         toast.success('Cliente excluído!');
+        recordAction('client', `Cliente excluído: ${name}`, { 
+          clientId: id, 
+          clientName: name 
+        });
       } catch (error) {
         handleError(error, 'clientsPage');
         toast.error('Erro ao excluir cliente');

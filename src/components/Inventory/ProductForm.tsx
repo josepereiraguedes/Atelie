@@ -13,6 +13,7 @@ import { useAppNavigation } from '../../hooks/useNavigation';
 import { useFormHandler } from '../../hooks/useFormHandler';
 import ErrorBoundary from '../common/ErrorBoundary';
 import { actionLoggerService } from '../../services/actionLogger';
+import { useUserActionHistory } from '../../hooks/useUserActionHistory';
 
 interface ProductFormProps {
   product?: Product;
@@ -27,6 +28,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product }) => {
     successMessage: 'Produto salvo com sucesso!',
     errorMessage: 'Erro ao salvar produto'
   });
+  const { recordAction } = useUserActionHistory();
   
   const [formData, setFormData] = useState({
     name: '',
@@ -198,12 +200,10 @@ const ProductForm: React.FC<ProductFormProps> = ({ product }) => {
           const result = await updateProduct(productId, formData);
           
           // Registrar ação
-          actionLoggerService.logAction(
-            'update',
-            'product',
-            `Atualizou o produto "${formData.name}"`,
-            { productId, name: formData.name }
-          );
+          recordAction('product', `Atualizou o produto "${formData.name}"`, { 
+            productId, 
+            name: formData.name 
+          });
           
           return result;
         } else {
@@ -211,12 +211,9 @@ const ProductForm: React.FC<ProductFormProps> = ({ product }) => {
           const result = await addProduct(formData);
           
           // Registrar ação
-          actionLoggerService.logAction(
-            'create',
-            'product',
-            `Criou o produto "${formData.name}"`,
-            { name: formData.name }
-          );
+          recordAction('product', `Criou o produto "${formData.name}"`, { 
+            name: formData.name 
+          });
           
           return result;
         }

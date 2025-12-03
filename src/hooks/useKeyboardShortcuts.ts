@@ -1,125 +1,62 @@
-import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useCallback } from 'react';
+import { keyboardShortcutsService, KeyboardShortcut } from '../services/keyboardShortcuts';
+import { usePreferences } from '../contexts/PreferencesContext';
 
-interface ShortcutConfig {
-  key: string;
-  ctrl?: boolean;
-  shift?: boolean;
-  alt?: boolean;
-  description: string;
-  action: () => void;
-}
+/**
+ * Hook personalizado para gerenciar atalhos de teclado
+ */
+export const useKeyboardShortcuts = () => {
+  const { preferences } = usePreferences();
 
-export const useKeyboardShortcuts = (shortcuts: ShortcutConfig[]) => {
-  const navigate = useNavigate();
+  // Registrar um atalho
+  const registerShortcut = useCallback((shortcut: KeyboardShortcut) => {
+    keyboardShortcutsService.registerShortcut(shortcut);
+    
+    // Retornar função de limpeza
+    return () => {
+      keyboardShortcutsService.unregisterShortcut(shortcut.id);
+    };
+  }, []);
 
+  // Remover um atalho
+  const unregisterShortcut = useCallback((id: string) => {
+    keyboardShortcutsService.unregisterShortcut(id);
+  }, []);
+
+  // Limpar todos os atalhos
+  const clearShortcuts = useCallback(() => {
+    keyboardShortcutsService.clearShortcuts();
+  }, []);
+
+  // Obter todos os atalhos
+  const getShortcuts = useCallback(() => {
+    return keyboardShortcutsService.getShortcuts();
+  }, []);
+
+  // Efeito para habilitar/desabilitar atalhos com base nas preferências
+  useEffect(() => {
+    keyboardShortcutsService.setEnabled(preferences.shortcuts.enableShortcuts);
+  }, [preferences.shortcuts.enableShortcuts]);
+
+  // Efeito para adicionar/remover listener de eventos de teclado
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      // Verificar se o usuário está em um campo de input/textarea
-      if (
-        event.target instanceof HTMLInputElement ||
-        event.target instanceof HTMLTextAreaElement ||
-        event.target instanceof HTMLSelectElement
-      ) {
-        return;
-      }
-
-      shortcuts.forEach(shortcut => {
-        // Verificar se as teclas correspondem
-        const keyMatch = event.key.toLowerCase() === shortcut.key.toLowerCase();
-        const ctrlMatch = shortcut.ctrl ? event.ctrlKey : true;
-        const shiftMatch = shortcut.shift ? event.shiftKey : true;
-        const altMatch = shortcut.alt ? event.altKey : true;
-
-        if (keyMatch && ctrlMatch && shiftMatch && altMatch) {
-          event.preventDefault();
-          shortcut.action();
-        }
-      });
+      keyboardShortcutsService.handleKeyDown(event);
     };
 
+    // Adicionar listener
     window.addEventListener('keydown', handleKeyDown);
+
+    // Remover listener ao desmontar
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [shortcuts, navigate]);
-};
+  }, []);
 
-// Atalhos padrão do sistema
-export const useDefaultShortcuts = () => {
-  const navigate = useNavigate();
-
-  const defaultShortcuts: ShortcutConfig[] = [
-    {
-      key: 'n',
-      ctrl: true,
-      description: 'Novo produto',
-      action: () => navigate('/inventory/new')
-    },
-    {
-      key: 'i',
-      ctrl: true,
-      description: 'Ir para inventário',
-      action: () => navigate('/inventory')
-    },
-    {
-      key: 'c',
-      ctrl: true,
-      description: 'Ir para clientes',
-      action: () => navigate('/clients')
-    },
-    {
-      key: 's',
-      ctrl: true,
-      description: 'Ir para fornecedores',
-      action: () => navigate('/suppliers')
-    },
-    {
-      key: 'v',
-      ctrl: true,
-      description: 'Ir para vendas',
-      action: () => navigate('/sales')
-    },
-    {
-      key: 'r',
-      ctrl: true,
-      description: 'Ir para relatórios',
-      action: () => navigate('/reports')
-    },
-    {
-      key: 'm',
-      ctrl: true,
-      description: 'Ir para marketplaces',
-      action: () => navigate('/marketplace-settings')
-    },
-    {
-      key: 'd',
-      ctrl: true,
-      description: 'Ir para dashboard',
-      action: () => navigate('/')
-    },
-    {
-      key: 'l',
-      ctrl: true,
-      description: 'Ir para histórico de ações',
-      action: () => navigate('/action-log')
-    },
-    {
-      key: ',',
-      ctrl: true,
-      description: 'Ir para configurações',
-      action: () => navigate('/settings')
-    },
-    {
-      key: 'k',
-      ctrl: true,
-      description: 'Abrir ajuda de atalhos',
-      action: () => {
-        // Esta ação pode ser implementada posteriormente para mostrar uma janela de ajuda
-        console.log('Ajuda de atalhos de teclado');
-      }
-    }
-  ];
-
-  useKeyboardShortcuts(defaultShortcuts);
+  return {
+    registerShortcut,
+    unregisterShortcut,
+    clearShortcuts,
+    getShortcuts
+  };
 };

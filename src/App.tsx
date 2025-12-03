@@ -14,7 +14,9 @@ function App() {
         <ThemeProvider>
           <NotificationProvider>
             <PreferencesProvider>
-              <AppContent />
+              <LocalDatabaseProvider>
+                <AppContent />
+              </LocalDatabaseProvider>
             </PreferencesProvider>
           </NotificationProvider>
         </ThemeProvider>

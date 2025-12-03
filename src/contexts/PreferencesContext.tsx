@@ -50,7 +50,8 @@ const defaultPreferences: UserPreferences = {
       'category-stats',
       'marketplace-overview',
       'advanced-pricing-metrics',
-      'custom-cost-dashboard'
+      'custom-cost-dashboard',
+      'usage-stats'
     ],
     widgetOrder: [
       'stats-cards',
@@ -59,7 +60,8 @@ const defaultPreferences: UserPreferences = {
       'category-stats',
       'marketplace-overview',
       'advanced-pricing-metrics',
-      'custom-cost-dashboard'
+      'custom-cost-dashboard',
+      'usage-stats'
     ],
     activeTab: 'overview'
   },

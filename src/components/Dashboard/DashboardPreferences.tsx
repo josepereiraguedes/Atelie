@@ -22,7 +22,8 @@ const DashboardPreferences: React.FC<DashboardPreferencesProps> = ({ isOpen, onC
     { id: 'category-stats', name: 'Estatísticas por Categoria', description: 'Distribuição de produtos por categoria' },
     { id: 'marketplace-overview', name: 'Visão Geral dos Marketplaces', description: 'Comparação de desempenho entre marketplaces' },
     { id: 'advanced-pricing-metrics', name: 'Métricas Avançadas de Precificação', description: 'Análise detalhada de custos e margens' },
-    { id: 'custom-cost-dashboard', name: 'Dashboard de Custos Personalizados', description: 'Visualização de custos adicionais configurados' }
+    { id: 'custom-cost-dashboard', name: 'Dashboard de Custos Personalizados', description: 'Visualização de custos adicionais configurados' },
+    { id: 'usage-stats', name: 'Estatísticas de Uso', description: 'Estatísticas de uso do sistema' }
   ];
 
   const toggleWidgetVisibility = (widgetId: string) => {

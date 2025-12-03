@@ -23,7 +23,7 @@ import ExecutiveDashboard from './pages/ExecutiveDashboard';
 import LoginForm from './components/Auth/LoginForm';
 import { useAuth } from './contexts/AuthContext';
 import ErrorBoundary from './components/common/ErrorBoundary';
-import { useDefaultShortcuts } from './hooks/useKeyboardShortcuts';
+import { useDefaultShortcuts } from './hooks/useDefaultShortcuts';
 
 import Suppliers from './pages/Suppliers';
 import PurchaseOrders from './pages/PurchaseOrders';

@@ -11,6 +11,7 @@ import FormActions from '../common/FormActions';
 import { useAppNavigation } from '../../hooks/useNavigation';
 import { useFormHandler } from '../../hooks/useFormHandler';
 import ErrorBoundary from '../common/ErrorBoundary';
+import { useUserActionHistory } from '../../hooks/useUserActionHistory';
 
 interface ClientFormProps {
   client?: Client;
@@ -25,6 +26,7 @@ const ClientForm: React.FC<ClientFormProps> = ({ client }) => {
     successMessage: 'Cliente salvo com sucesso!',
     errorMessage: 'Erro ao salvar cliente'
   });
+  const { recordAction } = useUserActionHistory();
   
   const [formData, setFormData] = useState({
     name: '',
@@ -67,10 +69,19 @@ const ClientForm: React.FC<ClientFormProps> = ({ client }) => {
         if (client || id) {
           // Atualizar cliente existente
           const clientId = client?.id || parseInt(id || '0');
-          return await updateClient(clientId, formData);
+          const result = await updateClient(clientId, formData);
+          recordAction('client', `Atualizou o cliente "${formData.name}"`, { 
+            clientId, 
+            clientName: formData.name 
+          });
+          return result;
         } else {
           // Criar novo cliente
-          return await addClient(formData);
+          const result = await addClient(formData);
+          recordAction('client', `Criou o cliente "${formData.name}"`, { 
+            clientName: formData.name 
+          });
+          return result;
         }
       });
       goTo('/clients');
