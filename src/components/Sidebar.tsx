@@ -66,6 +66,7 @@ const Sidebar: React.FC<SidebarProps> = memo((props) => {
       ]
     },
     { name: 'Categorias', href: '/categories', icon: Tag, roles: ['admin'] },
+    { name: 'Histórico de Ações', href: '/action-log', icon: FileText, roles: ['admin'] },
     { name: 'Configurações', href: '/settings', icon: Settings, roles: ['admin'] }
   ];
 

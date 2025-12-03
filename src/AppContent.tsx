@@ -23,6 +23,7 @@ import ExecutiveDashboard from './pages/ExecutiveDashboard';
 import LoginForm from './components/Auth/LoginForm';
 import { useAuth } from './contexts/AuthContext';
 import ErrorBoundary from './components/common/ErrorBoundary';
+import { useDefaultShortcuts } from './hooks/useKeyboardShortcuts';
 
 import Suppliers from './pages/Suppliers';
 import PurchaseOrders from './pages/PurchaseOrders';
@@ -35,9 +36,13 @@ import MarketplaceComparison from './pages/MarketplaceComparison';
 import PricingReports from './pages/PricingReports';
 import PriceSensitivityAnalysisPage from './pages/PriceSensitivityAnalysisPage';
 import CostComparisonPage from './pages/CostComparisonPage';
+import ActionLog from './pages/ActionLog';
 
 const AppContent: React.FC = () => {
   const { user } = useAuth();
+  
+  // Habilitar atalhos de teclado
+  useDefaultShortcuts();
 
   if (!user) {
     return (
@@ -164,6 +169,9 @@ const AppContent: React.FC = () => {
         </Route>
         <Route path="/cost-comparison" element={<Layout />}>
           <Route index element={<CostComparisonPage />} />
+        </Route>
+        <Route path="/action-log" element={<Layout />}>
+          <Route index element={<ActionLog />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

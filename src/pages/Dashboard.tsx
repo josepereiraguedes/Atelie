@@ -10,11 +10,19 @@ import PricingAlerts from '../components/marketplace/PricingAlerts';
 import AdvancedPricingMetrics from '../components/marketplace/AdvancedPricingMetrics';
 import CustomCostDashboardCard from '../components/marketplace/CustomCostDashboardCard';
 import useFinancialData from '../hooks/useFinancialData';
+import DashboardPreferences from '../components/Dashboard/DashboardPreferences';
+import { usePreferences } from '../contexts/PreferencesContext';
 
 const Dashboard: React.FC = () => {
   const { products, transactions, clients, getFinancialSummary, lowStockAlerts } = useLocalDatabase();
+  const { preferences } = usePreferences();
   const { financialData, loading } = useFinancialData(getFinancialSummary, transactions);
-  const [activeTab, setActiveTab] = useState<'overview' | 'pricing' | 'inventory'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'pricing' | 'inventory'>(preferences.dashboard.activeTab);
+
+  // Efeito para atualizar as preferências quando a aba muda
+  useEffect(() => {
+    // Aqui você poderia atualizar as preferências, mas vamos manter simples por enquanto
+  }, [activeTab]);
 
   // Calcular contas pendentes (vendas com status pending)
   const pendingReceivables = useMemo(() => {
@@ -62,6 +70,11 @@ const Dashboard: React.FC = () => {
     }
   ], [financialData, pendingReceivables, totalProducts, totalValue]);
 
+  // Verificar se um widget está visível
+  const isWidgetVisible = (widgetId: string) => {
+    return preferences.dashboard.visibleWidgets.includes(widgetId);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -74,6 +87,9 @@ const Dashboard: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Preferências do Dashboard */}
+      <DashboardPreferences />
 
       {/* Navegação por abas */}
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm">
@@ -117,65 +133,81 @@ const Dashboard: React.FC = () => {
       {activeTab === 'overview' && (
         <div className="space-y-6">
           {/* Alertas de Precificação */}
-          <PricingAlerts />
+          {isWidgetVisible('pricing-alerts') && (
+            <PricingAlerts />
+          )}
           
           {/* Alerta de Estoque Baixo */}
-          {lowStockAlerts.length > 0 && (
+          {isWidgetVisible('low-stock-alerts') && lowStockAlerts.length > 0 && (
             <LowStockAlerts limit={3} />
           )}
 
           {/* Cards de Estatísticas */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {statsCards.map((card, index) => {
-              const IconComponent = card.icon;
-              return (
-                <motion.div
-                  key={index}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.1 }}
-                  {...({ className: "bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4" } as HTMLMotionProps<'div'>)}
-                >
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">{card.title}</p>
-                      <p className="text-lg font-semibold text-gray-900 dark:text-white">{card.value}</p>
+          {isWidgetVisible('stats-cards') && (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {statsCards.map((card, index) => {
+                const IconComponent = card.icon;
+                return (
+                  <motion.div
+                    key={index}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.1 }}
+                    {...({ className: "bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4" } as HTMLMotionProps<'div'>)}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">{card.title}</p>
+                        <p className="text-lg font-semibold text-gray-900 dark:text-white">{card.value}</p>
+                      </div>
+                      <div className={`p-2 rounded-lg bg-${card.color}-100 dark:bg-${card.color}-900/30`}>
+                        <IconComponent className={`w-5 h-5 text-${card.color}-600 dark:text-${card.color}-400`} />
+                      </div>
                     </div>
-                    <div className={`p-2 rounded-lg bg-${card.color}-100 dark:bg-${card.color}-900/30`}>
-                      <IconComponent className={`w-5 h-5 text-${card.color}-600 dark:text-${card.color}-400`} />
-                    </div>
-                  </div>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">{card.subtitle}</p>
-                </motion.div>
-              );
-            })}
-          </div>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">{card.subtitle}</p>
+                  </motion.div>
+                );
+              })}
+            </div>
+          )}
 
           {/* Estatísticas por Categoria em Lista */}
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-5">
-            <CategoryStats />
-          </div>
+          {isWidgetVisible('category-stats') && (
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-5">
+              <CategoryStats />
+            </div>
+          )}
 
           {/* Visão Geral dos Marketplaces */}
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-5">
-            <MarketplaceOverview />
-          </div>
+          {isWidgetVisible('marketplace-overview') && (
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-5">
+              <MarketplaceOverview />
+            </div>
+          )}
         </div>
       )}
 
       {activeTab === 'pricing' && (
         <div className="space-y-6">
-          <AdvancedPricingMetrics />
-          <CustomCostDashboardCard />
+          {isWidgetVisible('advanced-pricing-metrics') && (
+            <AdvancedPricingMetrics />
+          )}
+          {isWidgetVisible('custom-cost-dashboard') && (
+            <CustomCostDashboardCard />
+          )}
         </div>
       )}
 
       {activeTab === 'inventory' && (
         <div className="space-y-6">
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-5">
-            <CategoryStats />
-          </div>
-          <LowStockAlerts />
+          {isWidgetVisible('category-stats') && (
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-5">
+              <CategoryStats />
+            </div>
+          )}
+          {isWidgetVisible('low-stock-alerts') && (
+            <LowStockAlerts />
+          )}
         </div>
       )}
     </div>

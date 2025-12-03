@@ -12,6 +12,7 @@ import FormActions from '../common/FormActions';
 import { useAppNavigation } from '../../hooks/useNavigation';
 import { useFormHandler } from '../../hooks/useFormHandler';
 import ErrorBoundary from '../common/ErrorBoundary';
+import { actionLoggerService } from '../../services/actionLogger';
 
 interface ProductFormProps {
   product?: Product;
@@ -194,10 +195,30 @@ const ProductForm: React.FC<ProductFormProps> = ({ product }) => {
         if (product || id) {
           // Atualizar produto existente
           const productId = product?.id || parseInt(id || '0');
-          return await updateProduct(productId, formData);
+          const result = await updateProduct(productId, formData);
+          
+          // Registrar ação
+          actionLoggerService.logAction(
+            'update',
+            'product',
+            `Atualizou o produto "${formData.name}"`,
+            { productId, name: formData.name }
+          );
+          
+          return result;
         } else {
           // Criar novo produto
-          return await addProduct(formData);
+          const result = await addProduct(formData);
+          
+          // Registrar ação
+          actionLoggerService.logAction(
+            'create',
+            'product',
+            `Criou o produto "${formData.name}"`,
+            { name: formData.name }
+          );
+          
+          return result;
         }
       });
       goTo('/inventory');

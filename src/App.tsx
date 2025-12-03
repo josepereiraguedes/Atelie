@@ -4,6 +4,7 @@ import { LocalDatabaseProvider } from './contexts/LocalDatabaseContext';
 import { ConfigProvider } from './contexts/ConfigContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { NotificationProvider } from './contexts/NotificationContext';
+import { PreferencesProvider } from './contexts/PreferencesContext';
 import AppContent from './AppContent';
 
 function App() {
@@ -12,7 +13,9 @@ function App() {
       <ConfigProvider>
         <ThemeProvider>
           <NotificationProvider>
-            <AppContent />
+            <PreferencesProvider>
+              <AppContent />
+            </PreferencesProvider>
           </NotificationProvider>
         </ThemeProvider>
       </ConfigProvider>
