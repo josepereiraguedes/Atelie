@@ -1,95 +1,250 @@
-import React, { useEffect, useState, useMemo } from 'react';
-import { Package, DollarSign, TrendingUp, Clock, Bell, AlertTriangle, ShoppingCart, TrendingDown, Minus } from 'lucide-react';
-import { FinancialSummary, useLocalDatabase } from '../contexts/LocalDatabaseContext';
-import { handleError } from '../utils/errorHandler';
-import { motion, HTMLMotionProps } from 'framer-motion';
-import LowStockAlerts from '../components/Inventory/LowStockAlerts';
-import CategoryStats from '../components/Inventory/CategoryStats';
-import MarketplaceOverview from '../components/marketplace/MarketplaceOverview';
-import PricingAlerts from '../components/marketplace/PricingAlerts';
-import AdvancedPricingMetrics from '../components/marketplace/AdvancedPricingMetrics';
-import CustomCostDashboardCard from '../components/marketplace/CustomCostDashboardCard';
-import useFinancialData from '../hooks/useFinancialData';
-import DashboardPreferences from '../components/Dashboard/DashboardPreferences';
+import React, { useState, useMemo } from 'react';
+import { useLocalDatabase } from '../contexts/LocalDatabaseContext';
 import { usePreferences } from '../contexts/PreferencesContext';
+import DashboardPreferences from '../components/Dashboard/DashboardPreferences';
+import StatsCards from '../components/Dashboard/StatsCards';
+import LowStockAlerts from '../components/Dashboard/LowStockAlerts';
+import SalesChart from '../components/Dashboard/SalesChart';
+import TopSellingProducts from '../components/Dashboard/TopSellingProducts';
+import SupplierPerformance from '../components/Dashboard/SupplierPerformance';
+import { Settings, BarChart3, AlertTriangle, TrendingUp, ShoppingCart, Users } from 'lucide-react';
 
 const Dashboard: React.FC = () => {
-  const { products, transactions, clients, getFinancialSummary, lowStockAlerts } = useLocalDatabase();
+  const { products, transactions, clients, suppliers, purchaseOrders } = useLocalDatabase();
   const { preferences } = usePreferences();
-  const { financialData, loading } = useFinancialData(getFinancialSummary, transactions);
+  const [showPreferences, setShowPreferences] = useState(false);
   const [activeTab, setActiveTab] = useState<'overview' | 'pricing' | 'inventory'>(preferences.dashboard.activeTab);
 
-  // Efeito para atualizar as preferências quando a aba muda
-  useEffect(() => {
-    // Aqui você poderia atualizar as preferências, mas vamos manter simples por enquanto
-  }, [activeTab]);
+  // Calcular estatísticas para o StatsCards
+  const statsCardsData = useMemo(() => {
+    // Calcular receita total (vendas pagas)
+    const salesTransactions = transactions.filter(t => t.type === 'sale' && t.payment_status === 'paid');
+    const totalRevenue = salesTransactions.reduce((sum, t) => sum + t.total, 0);
+    
+    // Calcular custo total (produtos vendidos * custo unitário)
+    let totalCost = 0;
+    salesTransactions.forEach(transaction => {
+      if (transaction.items) {
+        transaction.items.forEach(item => {
+          const product = products.find(p => p.id === item.product_id);
+          if (product) {
+            totalCost += item.quantity * product.cost;
+          }
+        });
+      }
+    });
+    
+    // Calcular lucro líquido
+    const totalProfit = totalRevenue - totalCost;
+    
+    // Calcular margem de lucro
+    const profitMargin = totalRevenue > 0 ? (totalProfit / totalRevenue) * 100 : 0;
+    
+    // Calcular valor total do estoque
+    const totalInventoryValue = products.reduce((sum, product) => sum + (product.quantity * product.cost), 0);
+    
+    // Calcular clientes ativos (compras nos últimos 30 dias)
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    
+    const activeClients = clients.filter(client => {
+      return transactions.some(transaction => 
+        transaction.client_id === client.id && 
+        new Date(transaction.created_at) > thirtyDaysAgo
+      );
+    }).length;
+    
+    // Calcular valor total de pedidos de compra
+    const totalPurchaseValue = purchaseOrders.reduce((sum, order) => sum + order.total, 0);
+    
+    // Calcular alertas de estoque baixo
+    const lowStockAlerts = products.filter(product => 
+      product.min_stock !== undefined && 
+      product.quantity <= product.min_stock
+    ).length;
+    
+    return {
+      totalRevenue,
+      totalCost,
+      totalProfit,
+      profitMargin,
+      totalInventoryValue,
+      totalClients: clients.length,
+      activeClients,
+      totalSuppliers: suppliers.length,
+      totalPurchaseOrders: purchaseOrders.length,
+      totalPurchaseValue,
+      lowStockAlerts
+    };
+  }, [products, transactions, clients, suppliers, purchaseOrders]);
 
-  // Calcular contas pendentes (vendas com status pending)
-  const pendingReceivables = useMemo(() => {
-    return transactions
-      .filter(t => t.type === 'sale' && t.payment_status === 'pending')
-      .reduce((sum, t) => sum + t.total, 0);
+  // Obter produtos com estoque baixo para o LowStockAlerts
+  const lowStockProducts = useMemo(() => {
+    return products
+      .filter(product => 
+        product.min_stock !== undefined && 
+        product.quantity <= product.min_stock
+      )
+      .map(product => ({
+        id: product.id,
+        name: product.name,
+        category: product.category,
+        subcategory: product.subcategory,
+        quantity: product.quantity,
+        min_stock: product.min_stock!,
+        image: product.image
+      }))
+      .slice(0, 5); // Limitar a 5 produtos para o dashboard
+  }, [products]);
+
+  // Preparar dados para o SalesChart
+  const salesChartData = useMemo(() => {
+    // Agrupar transações por mês
+    const monthlyData: Record<string, { sales: number; purchases: number }> = {};
+    
+    // Processar vendas
+    transactions.forEach(transaction => {
+      const date = new Date(transaction.created_at);
+      const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+      
+      if (!monthlyData[monthKey]) {
+        monthlyData[monthKey] = { sales: 0, purchases: 0 };
+      }
+      
+      if (transaction.type === 'sale' && transaction.payment_status === 'paid') {
+        monthlyData[monthKey].sales += transaction.total;
+      } else if (transaction.type === 'purchase') {
+        monthlyData[monthKey].purchases += transaction.total;
+      }
+    });
+    
+    // Converter para formato esperado pelo componente
+    return Object.entries(monthlyData)
+      .map(([date, values]) => ({
+        date,
+        sales: values.sales,
+        purchases: values.purchases
+      }))
+      .sort((a, b) => a.date.localeCompare(b.date))
+      .slice(-6); // Últimos 6 meses
   }, [transactions]);
 
-  const totalProducts = useMemo(() => {
-    return products.length;
-  }, [products]);
+  // Preparar dados para o TopSellingProducts
+  const topSellingProductsData = useMemo(() => {
+    // Calcular vendas por produto
+    const productSales: Record<number, { name: string; sales: number; revenue: number }> = {};
+    
+    transactions
+      .filter(t => t.type === 'sale' && t.payment_status === 'paid')
+      .forEach(transaction => {
+        if (transaction.items) {
+          transaction.items.forEach(item => {
+            const product = products.find(p => p.id === item.product_id);
+            if (product) {
+              if (!productSales[item.product_id]) {
+                productSales[item.product_id] = {
+                  name: product.name,
+                  sales: 0,
+                  revenue: 0
+                };
+              }
+              productSales[item.product_id].sales += item.quantity;
+              productSales[item.product_id].revenue += item.total;
+            }
+          });
+        }
+      });
+    
+    // Converter para formato esperado pelo componente e ordenar por vendas
+    return Object.values(productSales)
+      .sort((a, b) => b.sales - a.sales)
+      .slice(0, 5); // Top 5 produtos
+  }, [transactions, products]);
 
-  const totalValue = useMemo(() => {
-    return products.reduce((sum, p) => sum + ((Number(p.quantity) || 0) * (Number(p.sale_price) || 0)), 0);
-  }, [products]);
+  // Preparar dados para o SupplierPerformance
+  const supplierPerformanceData = useMemo(() => {
+    // Calcular desempenho dos fornecedores
+    const supplierStats: Record<number, { name: string; orders: number; onTimeRate: number }> = {};
+    
+    purchaseOrders.forEach(order => {
+      const supplier = suppliers.find(s => s.id === order.supplier_id);
+      if (supplier) {
+        if (!supplierStats[order.supplier_id!]) {
+          supplierStats[order.supplier_id!] = {
+            name: supplier.name,
+            orders: 0,
+            onTimeRate: 100 // Simplificação - assumindo 100% pontualidade
+          };
+        }
+        supplierStats[order.supplier_id!].orders += 1;
+      }
+    });
+    
+    // Converter para formato esperado pelo componente e ordenar por pedidos
+    return Object.values(supplierStats)
+      .sort((a, b) => b.orders - a.orders)
+      .slice(0, 5); // Top 5 fornecedores
+  }, [purchaseOrders, suppliers]);
 
-  const statsCards = useMemo(() => [
-    {
-      title: 'Faturamento',
-      value: `R$ ${(financialData.totalSales || 0).toFixed(2)}`,
+  // Widgets disponíveis
+  const widgets = {
+    'stats-cards': {
+      id: 'stats-cards',
+      component: <StatsCards {...statsCardsData} />,
+      icon: BarChart3,
+      title: 'Estatísticas'
+    },
+    'low-stock-alerts': {
+      id: 'low-stock-alerts',
+      component: <LowStockAlerts products={lowStockProducts} />,
+      icon: AlertTriangle,
+      title: 'Estoque Baixo'
+    },
+    'sales-chart': {
+      id: 'sales-chart',
+      component: <SalesChart salesData={salesChartData} />,
       icon: TrendingUp,
-      color: 'purple',
-      subtitle: 'Vendas pagas'
+      title: 'Vendas'
     },
-    {
-      title: 'A Receber',
-      value: `R$ ${pendingReceivables.toFixed(2)}`,
-      icon: Clock,
-      color: 'blue',
-      subtitle: 'Vendas pendentes'
+    'top-selling-products': {
+      id: 'top-selling-products',
+      component: <TopSellingProducts products={topSellingProductsData} />,
+      icon: ShoppingCart,
+      title: 'Produtos Populares'
     },
-    {
-      title: 'Produtos',
-      value: totalProducts.toString(),
-      icon: Package,
-      color: 'green',
-      subtitle: 'Itens no estoque'
-    },
-    {
-      title: 'Valor em Estoque',
-      value: `R$ ${totalValue.toFixed(2)}`,
-      icon: DollarSign,
-      color: 'yellow',
-      subtitle: 'Valor total'
+    'supplier-performance': {
+      id: 'supplier-performance',
+      component: <SupplierPerformance suppliers={supplierPerformanceData} />,
+      icon: Users,
+      title: 'Fornecedores'
     }
-  ], [financialData, pendingReceivables, totalProducts, totalValue]);
-
-  // Verificar se um widget está visível
-  const isWidgetVisible = (widgetId: string) => {
-    return preferences.dashboard.visibleWidgets.includes(widgetId);
   };
 
-  return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-          Dashboard
-        </h1>
-        <div className="flex items-center space-x-3">
-          <div className="text-xs text-gray-500 dark:text-gray-400">
-            Atualizado: {new Date().toLocaleTimeString('pt-BR')}
-          </div>
-        </div>
-      </div>
+  // Aplicar classes CSS baseadas nas preferências
+  const dashboardClasses = `
+    ${preferences.display.compactMode ? 'space-y-3' : 'space-y-6'}
+    ${preferences.display.animations ? 'transition-all duration-300' : ''}
+  `.trim();
 
-      {/* Preferências do Dashboard */}
-      <DashboardPreferences />
+  return (
+    <div className={dashboardClasses}>
+      {/* Cabeçalho */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Dashboard</h1>
+          <p className="text-gray-600 dark:text-gray-400 mt-1">
+            Visão geral do seu negócio
+          </p>
+        </div>
+        
+        <button
+          onClick={() => setShowPreferences(true)}
+          className="inline-flex items-center px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
+        >
+          <Settings className="w-4 h-4 mr-2" />
+          Preferências
+        </button>
+      </div>
 
       {/* Navegação por abas */}
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm">
@@ -129,87 +284,77 @@ const Dashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* Conteúdo das abas */}
-      {activeTab === 'overview' && (
-        <div className="space-y-6">
-          {/* Alertas de Precificação */}
-          {isWidgetVisible('pricing-alerts') && (
-            <PricingAlerts />
-          )}
-          
-          {/* Alerta de Estoque Baixo */}
-          {isWidgetVisible('low-stock-alerts') && lowStockAlerts.length > 0 && (
-            <LowStockAlerts limit={3} />
-          )}
-
-          {/* Cards de Estatísticas */}
-          {isWidgetVisible('stats-cards') && (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {statsCards.map((card, index) => {
-                const IconComponent = card.icon;
-                return (
-                  <motion.div
-                    key={index}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.1 }}
-                    {...({ className: "bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4" } as HTMLMotionProps<'div'>)}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">{card.title}</p>
-                        <p className="text-lg font-semibold text-gray-900 dark:text-white">{card.value}</p>
-                      </div>
-                      <div className={`p-2 rounded-lg bg-${card.color}-100 dark:bg-${card.color}-900/30`}>
-                        <IconComponent className={`w-5 h-5 text-${card.color}-600 dark:text-${card.color}-400`} />
-                      </div>
+      {/* Conteúdo do dashboard baseado na aba ativa e nas preferências */}
+      <div className={`${preferences.display.compactMode ? 'space-y-3' : 'space-y-6'}`}>
+        {activeTab === 'overview' && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+            {preferences.dashboard.widgetOrder
+              .filter(widgetId => preferences.dashboard.visibleWidgets.includes(widgetId))
+              .map(widgetId => {
+                const widget = widgets[widgetId as keyof typeof widgets];
+                if (!widget) return null;
+                
+                // Somente mostrar widgets relevantes para a aba overview
+                if (['stats-cards', 'low-stock-alerts', 'sales-chart', 'top-selling-products'].includes(widgetId)) {
+                  return (
+                    <div key={widgetId} className={`${preferences.display.compactMode ? 'p-3' : 'p-4'} bg-white dark:bg-gray-800 rounded-lg shadow-sm`}>
+                      {widget.component}
                     </div>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">{card.subtitle}</p>
-                  </motion.div>
-                );
+                  );
+                }
+                return null;
               })}
-            </div>
-          )}
+          </div>
+        )}
 
-          {/* Estatísticas por Categoria em Lista */}
-          {isWidgetVisible('category-stats') && (
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-5">
-              <CategoryStats />
-            </div>
-          )}
+        {activeTab === 'pricing' && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+            {preferences.dashboard.widgetOrder
+              .filter(widgetId => preferences.dashboard.visibleWidgets.includes(widgetId))
+              .map(widgetId => {
+                const widget = widgets[widgetId as keyof typeof widgets];
+                if (!widget) return null;
+                
+                // Somente mostrar widgets relevantes para a aba pricing
+                if (['supplier-performance'].includes(widgetId)) {
+                  return (
+                    <div key={widgetId} className={`${preferences.display.compactMode ? 'p-3' : 'p-4'} bg-white dark:bg-gray-800 rounded-lg shadow-sm`}>
+                      {widget.component}
+                    </div>
+                  );
+                }
+                return null;
+              })}
+          </div>
+        )}
 
-          {/* Visão Geral dos Marketplaces */}
-          {isWidgetVisible('marketplace-overview') && (
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-5">
-              <MarketplaceOverview />
-            </div>
-          )}
-        </div>
-      )}
+        {activeTab === 'inventory' && (
+          <div className="grid grid-cols-1 gap-4 md:gap-6">
+            {preferences.dashboard.widgetOrder
+              .filter(widgetId => preferences.dashboard.visibleWidgets.includes(widgetId))
+              .map(widgetId => {
+                const widget = widgets[widgetId as keyof typeof widgets];
+                if (!widget) return null;
+                
+                // Somente mostrar widgets relevantes para a aba inventory
+                if (['low-stock-alerts'].includes(widgetId)) {
+                  return (
+                    <div key={widgetId} className={`${preferences.display.compactMode ? 'p-3' : 'p-4'} bg-white dark:bg-gray-800 rounded-lg shadow-sm`}>
+                      {widget.component}
+                    </div>
+                  );
+                }
+                return null;
+              })}
+          </div>
+        )}
+      </div>
 
-      {activeTab === 'pricing' && (
-        <div className="space-y-6">
-          {isWidgetVisible('advanced-pricing-metrics') && (
-            <AdvancedPricingMetrics />
-          )}
-          {isWidgetVisible('custom-cost-dashboard') && (
-            <CustomCostDashboardCard />
-          )}
-        </div>
-      )}
-
-      {activeTab === 'inventory' && (
-        <div className="space-y-6">
-          {isWidgetVisible('category-stats') && (
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-5">
-              <CategoryStats />
-            </div>
-          )}
-          {isWidgetVisible('low-stock-alerts') && (
-            <LowStockAlerts />
-          )}
-        </div>
-      )}
+      {/* Modal de preferências */}
+      <DashboardPreferences 
+        isOpen={showPreferences} 
+        onClose={() => setShowPreferences(false)} 
+      />
     </div>
   );
 };

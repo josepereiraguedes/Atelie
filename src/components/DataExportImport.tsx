@@ -2,22 +2,36 @@ import React, { useState, useRef, memo, useCallback, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useLocalDatabase } from '../contexts/LocalDatabaseContext';
 import { dataExportImportService, BackupData } from '../services/dataExportImport';
+import { autoBackupService, AutoBackupConfig } from '../services/autoBackup';
+import VersionHistoryManager from './VersionHistoryManager';
 import toast from 'react-hot-toast';
-import { Download, Info } from 'lucide-react';
+import { Download, Info, Settings, Clock } from 'lucide-react';
 
 const DataExportImport: React.FC = memo(() => {
   const { user } = useAuth();
-  const { products, clients, transactions } = useLocalDatabase();
+  const { products, clients, transactions, categories, suppliers } = useLocalDatabase();
   const [isExporting, setIsExporting] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
   const [backups, setBackups] = useState<BackupData[]>([]);
   const [selectedBackup, setSelectedBackup] = useState<string>('');
+  const [showBackupSettings, setShowBackupSettings] = useState(false);
+  const [showVersionHistory, setShowVersionHistory] = useState(false);
+  const [backupConfig, setBackupConfig] = useState<AutoBackupConfig>({
+    enabled: true,
+    interval: 'daily',
+    lastBackup: null,
+    retention: 7
+  });
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Carregar backups ao montar o componente
   useEffect(() => {
     const loadedBackups = dataExportImportService.getBackups();
     setBackups(loadedBackups);
+    
+    // Carregar configurações de backup automático
+    const config = autoBackupService.getConfig();
+    setBackupConfig(config);
   }, []);
 
   /**
@@ -142,6 +156,39 @@ const DataExportImport: React.FC = memo(() => {
     return new Date(dateString).toLocaleString('pt-BR');
   }, []);
 
+  // Adicionar estas funções para gerenciar configurações de backup
+  const handleBackupConfigChange = (config: Partial<AutoBackupConfig>) => {
+    const newConfig = { ...backupConfig, ...config };
+    setBackupConfig(newConfig);
+    
+    // Atualizar no serviço
+    if (config.enabled !== undefined) {
+      autoBackupService.setEnabled(config.enabled);
+    }
+    if (config.interval) {
+      autoBackupService.setInterval(config.interval);
+    }
+    if (config.retention !== undefined) {
+      autoBackupService.setRetention(config.retention);
+    }
+  };
+
+  const handleManualBackup = async () => {
+    if (!user) return;
+    
+    try {
+      await autoBackupService.performBackup();
+      toast.success('Backup manual criado com sucesso!');
+      
+      // Atualizar lista de backups
+      const updatedBackups = dataExportImportService.getBackups();
+      setBackups(updatedBackups);
+    } catch (error) {
+      console.error('Erro ao criar backup manual:', error);
+      toast.error('Erro ao criar backup manual');
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-2 gap-3">
@@ -152,7 +199,7 @@ const DataExportImport: React.FC = memo(() => {
               Exportar
             </h4>
             <div className="text-xs text-gray-500 dark:text-gray-400">
-              {products.length + clients.length + transactions.length}
+              {products.length + clients.length + transactions.length + categories.length + suppliers.length}
             </div>
           </div>
           
@@ -212,6 +259,114 @@ const DataExportImport: React.FC = memo(() => {
             </label>
           </div>
         </div>
+      </div>
+      
+      {/* Seção de Backup Automático */}
+      <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-3">
+        <div className="flex items-center justify-between mb-2">
+          <h4 className="font-medium text-gray-900 dark:text-white text-sm">
+            Backup Automático
+          </h4>
+          <button 
+            onClick={() => setShowBackupSettings(!showBackupSettings)}
+            className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
+          >
+            <Settings className="w-4 h-4" />
+          </button>
+        </div>
+        
+        <div className="flex gap-2 mb-2">
+          <button
+            onClick={handleManualBackup}
+            className="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium py-1.5 px-3 rounded-md transition duration-150 ease-in-out"
+          >
+            Backup Manual
+          </button>
+        </div>
+        
+        {showBackupSettings && (
+          <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-gray-700 dark:text-gray-300">Ativado</span>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={backupConfig.enabled}
+                    onChange={(e) => handleBackupConfigChange({ enabled: e.target.checked })}
+                    className="sr-only peer"
+                  />
+                  <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                </label>
+              </div>
+              
+              <div>
+                <label className="block text-xs text-gray-700 dark:text-gray-300 mb-1">
+                  Intervalo
+                </label>
+                <select
+                  value={backupConfig.interval}
+                  onChange={(e) => handleBackupConfigChange({ interval: e.target.value as any })}
+                  className="w-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md py-1.5 px-2 text-gray-900 dark:text-white text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                  disabled={!backupConfig.enabled}
+                >
+                  <option value="daily">Diário</option>
+                  <option value="weekly">Semanal</option>
+                  <option value="monthly">Mensal</option>
+                </select>
+              </div>
+              
+              <div>
+                <label className="block text-xs text-gray-700 dark:text-gray-300 mb-1">
+                  Retenção (número de backups)
+                </label>
+                <input
+                  type="number"
+                  min="1"
+                  max="30"
+                  value={backupConfig.retention}
+                  onChange={(e) => handleBackupConfigChange({ retention: parseInt(e.target.value) || 7 })}
+                  className="w-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md py-1.5 px-2 text-gray-900 dark:text-white text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                  disabled={!backupConfig.enabled}
+                />
+              </div>
+              
+              {backupConfig.lastBackup && (
+                <div className="text-xs text-gray-600 dark:text-gray-400">
+                  Último backup: {formatDate(backupConfig.lastBackup)}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+      
+      {/* Seção de Histórico de Versões */}
+      <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-3">
+        <div className="flex items-center justify-between mb-2">
+          <h4 className="font-medium text-gray-900 dark:text-white text-sm">
+            Histórico de Versões
+          </h4>
+          <button 
+            onClick={() => setShowVersionHistory(!showVersionHistory)}
+            className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
+          >
+            <Clock className="w-4 h-4" />
+          </button>
+        </div>
+        
+        <button
+          onClick={() => setShowVersionHistory(true)}
+          className="w-full bg-purple-600 hover:bg-purple-700 text-white text-xs font-medium py-1.5 px-3 rounded-md transition duration-150 ease-in-out"
+        >
+          Gerenciar Versões
+        </button>
+        
+        {showVersionHistory && (
+          <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+            <VersionHistoryManager />
+          </div>
+        )}
       </div>
       
       {/* Seção de Backups */}

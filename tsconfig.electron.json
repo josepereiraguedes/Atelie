@@ -9,10 +9,13 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "jsx": "react"
   },
   "include": [
-    "src/services/autoUpdate.ts"
+    "src/services/autoUpdate.ts",
+    "src/services/autoBackup.ts",
+    "src/services/versionHistory.ts"
   ],
   "exclude": [
     "node_modules",

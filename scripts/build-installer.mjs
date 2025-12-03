@@ -35,26 +35,11 @@ try {
 
   // 5. Gerar o instalador NSIS para Windows
   console.log('📦 Gerando instalador NSIS...');
-  execSync('electron-builder build --win', { stdio: 'inherit' });
+  execSync('npx electron-builder --win nsis', { stdio: 'inherit' });
   console.log('✅ Instalador NSIS gerado com sucesso');
 
-  // 6. Listar arquivos gerados
-  console.log('📂 Arquivos gerados:');
-  const distElectronPath = 'dist_electron';
-  if (fs.existsSync(distElectronPath)) {
-    const files = fs.readdirSync(distElectronPath);
-    files.forEach(file => {
-      if (file.includes('.exe')) {
-        const stats = fs.statSync(path.join(distElectronPath, file));
-        console.log(`   📄 ${file} (${(stats.size / 1024 / 1024).toFixed(2)} MB)`);
-      }
-    });
-  }
-
-  console.log('🎉 Processo de build do instalador concluído com sucesso!');
-  console.log('📁 O instalador está disponível em: dist_electron/');
-
+  console.log('🎉 Processo de build do instalador concluído!');
 } catch (error) {
-  console.error('❌ Erro durante o processo de build:', error.message);
+  console.error('❌ Erro no processo de build:', error);
   process.exit(1);
 }

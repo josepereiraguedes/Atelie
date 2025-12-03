@@ -8,11 +8,36 @@ export interface DashboardPreferences {
   activeTab: 'overview' | 'pricing' | 'inventory';
 }
 
+// Interface para as preferências de notificações
+export interface NotificationPreferences {
+  emailNotifications: boolean;
+  desktopNotifications: boolean;
+  soundNotifications: boolean;
+  notificationVolume: number; // 0-100
+}
+
+// Interface para as preferências de exibição
+export interface DisplayPreferences {
+  fontSize: 'small' | 'medium' | 'large';
+  compactMode: boolean;
+  animations: boolean;
+  showTooltips: boolean;
+}
+
+// Interface para as preferências de atalhos
+export interface ShortcutPreferences {
+  enableShortcuts: boolean;
+  customShortcuts: Record<string, string>; // key -> action
+}
+
 // Interface para as preferências gerais
 export interface UserPreferences {
   dashboard: DashboardPreferences;
   theme: 'light' | 'dark' | 'system';
   language: 'pt-BR' | 'en-US';
+  notifications: NotificationPreferences; // Adicionar esta linha
+  display: DisplayPreferences; // Adicionar esta linha
+  shortcuts: ShortcutPreferences; // Adicionar esta linha
 }
 
 // Valores padrão para as preferências
@@ -39,7 +64,23 @@ const defaultPreferences: UserPreferences = {
     activeTab: 'overview'
   },
   theme: 'system',
-  language: 'pt-BR'
+  language: 'pt-BR',
+  notifications: { // Adicionar esta seção
+    emailNotifications: true,
+    desktopNotifications: true,
+    soundNotifications: true,
+    notificationVolume: 80
+  },
+  display: { // Adicionar esta seção
+    fontSize: 'medium',
+    compactMode: false,
+    animations: true,
+    showTooltips: true
+  },
+  shortcuts: { // Adicionar esta seção
+    enableShortcuts: true,
+    customShortcuts: {}
+  }
 };
 
 interface PreferencesContextType {
@@ -68,7 +109,12 @@ export const PreferencesProvider: React.FC<{ children: React.ReactNode }> = ({ c
         document.documentElement.classList.remove('dark');
       }
     }
-  }, [preferences.theme]);
+    
+    // Aplicar preferências de exibição
+    document.documentElement.style.fontSize = 
+      preferences.display.fontSize === 'small' ? '14px' :
+      preferences.display.fontSize === 'large' ? '18px' : '16px';
+  }, [preferences.theme, preferences.display.fontSize]);
 
   const updatePreferences = (newPreferences: Partial<UserPreferences>) => {
     setPreferences(prev => ({

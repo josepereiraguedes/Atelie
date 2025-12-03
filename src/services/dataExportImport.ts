@@ -1,4 +1,4 @@
-import { Product, Client, Transaction } from '../contexts/LocalDatabaseContext';
+import { Product, Client, Transaction, Category, Supplier } from '../contexts/LocalDatabaseContext';
 import { handleError } from '../utils/errorHandler';
 
 // Interface para os dados exportados
@@ -13,6 +13,8 @@ export interface ExportedData {
     products: Product[];
     clients: Client[];
     transactions: Transaction[];
+    categories: Category[];  // Adicionar esta linha
+    suppliers: Supplier[];   // Adicionar esta linha
   }
 }
 
@@ -43,6 +45,8 @@ class DataExportImportService {
       const products = this.getFromLocalStorage<Product[]>(`products_${userId}`, []);
       const clients = this.getFromLocalStorage<Client[]>(`clients_${userId}`, []);
       const transactions = this.getFromLocalStorage<Transaction[]>(`transactions_${userId}`, []);
+      const categories = this.getFromLocalStorage<Category[]>(`categories_${userId}`, []);  // Adicionar esta linha
+      const suppliers = this.getFromLocalStorage<Supplier[]>(`suppliers_${userId}`, []);   // Adicionar esta linha
       
       // Criar objeto de dados exportados
       const exportedData: ExportedData = {
@@ -55,7 +59,9 @@ class DataExportImportService {
         data: {
           products,
           clients,
-          transactions
+          transactions,
+          categories,   // Adicionar esta linha
+          suppliers     // Adicionar esta linha
         }
       };
       
@@ -114,6 +120,8 @@ class DataExportImportService {
       const products = this.getFromLocalStorage<Product[]>(`products_${userId}`, []);
       const clients = this.getFromLocalStorage<Client[]>(`clients_${userId}`, []);
       const transactions = this.getFromLocalStorage<Transaction[]>(`transactions_${userId}`, []);
+      const categories = this.getFromLocalStorage<Category[]>(`categories_${userId}`, []);  // Adicionar esta linha
+      const suppliers = this.getFromLocalStorage<Supplier[]>(`suppliers_${userId}`, []);   // Adicionar esta linha
       
       // Criar objeto de backup
       const backupData: BackupData = {
@@ -127,7 +135,9 @@ class DataExportImportService {
         data: {
           products,
           clients,
-          transactions
+          transactions,
+          categories,   // Adicionar esta linha
+          suppliers     // Adicionar esta linha
         }
       };
       
@@ -178,6 +188,8 @@ class DataExportImportService {
       this.saveToLocalStorage(`products_${userId}`, backup.data.products);
       this.saveToLocalStorage(`clients_${userId}`, backup.data.clients);
       this.saveToLocalStorage(`transactions_${userId}`, backup.data.transactions);
+      this.saveToLocalStorage(`categories_${userId}`, backup.data.categories);  // Adicionar esta linha
+      this.saveToLocalStorage(`suppliers_${userId}`, backup.data.suppliers);   // Adicionar esta linha
       
       console.log('✅ Backup restaurado com sucesso');
     } catch (error) {

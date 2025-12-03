@@ -6,17 +6,37 @@ const url = require('url');
 // Em desenvolvimento, importa o arquivo TypeScript
 // Em produção, importa o arquivo JavaScript compilado
 let autoUpdateService;
+let autoBackupService; // Adicionar esta linha
+
 try {
   // Tentar importar o arquivo compilado para produção
   const autoUpdateModule = require('../electron/dist/src/services/autoUpdate.js');
   autoUpdateService = autoUpdateModule.autoUpdateService;
   console.log('✅ Serviço de atualização carregado (produção)');
+  
+  // Tentar importar o serviço de backup automático
+  try {
+    const autoBackupModule = require('../electron/dist/src/services/autoBackup.js');
+    autoBackupService = autoBackupModule.autoBackupService;
+    console.log('✅ Serviço de backup automático carregado (produção)');
+  } catch (backupError) {
+    console.warn('⚠️  Serviço de backup automático não encontrado (produção)');
+  }
 } catch (error) {
   try {
     // Fallback para desenvolvimento
     const autoUpdateModule = require('../src/services/autoUpdate.ts');
     autoUpdateService = autoUpdateModule.autoUpdateService;
     console.log('✅ Serviço de atualização carregado (desenvolvimento)');
+    
+    // Fallback para desenvolvimento - backup automático
+    try {
+      const autoBackupModule = require('../src/services/autoBackup.ts');
+      autoBackupService = autoBackupModule.autoBackupService;
+      console.log('✅ Serviço de backup automático carregado (desenvolvimento)');
+    } catch (backupError) {
+      console.warn('⚠️  Serviço de backup automático não encontrado (desenvolvimento)');
+    }
   } catch (error2) {
     console.warn('⚠️  Serviço de atualização não encontrado, desativando atualizações automáticas');
     autoUpdateService = {
@@ -123,6 +143,16 @@ app.whenReady().then(() => {
   
   // Inicializar o serviço de atualização automática
   autoUpdateService.initialize();
+  
+  // Inicializar o serviço de backup automático (se disponível)
+  if (autoBackupService && typeof autoBackupService.start === 'function') {
+    try {
+      autoBackupService.start();
+      console.log('✅ Serviço de backup automático iniciado');
+    } catch (error) {
+      console.error('❌ Erro ao iniciar serviço de backup automático:', error);
+    }
+  }
 }).catch(error => {
   console.error('❌ Erro ao iniciar Electron:', error);
 });
