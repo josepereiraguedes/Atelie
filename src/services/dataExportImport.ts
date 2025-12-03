@@ -63,10 +63,8 @@ class DataExportImportService {
       const jsonData = JSON.stringify(exportedData, null, 2);
       const blob = new Blob([jsonData], { type: 'application/json' });
       
-      console.log('✅ Dados exportados com sucesso');
       return blob;
     } catch (error) {
-      console.error('❌ Erro ao exportar dados:', error);
       handleError(error, 'dataExport');
       throw error;
     }
@@ -268,7 +266,6 @@ class DataExportImportService {
       
       return true;
     } catch (error) {
-      console.error('❌ Erro na validação dos dados:', error);
       return false;
     }
   }
@@ -284,7 +281,6 @@ class DataExportImportService {
       const item = localStorage.getItem(key);
       return item ? JSON.parse(item) : defaultValue;
     } catch (error) {
-      console.error(`❌ Erro ao obter ${key} do localStorage:`, error);
       return defaultValue;
     }
   }
@@ -299,7 +295,6 @@ class DataExportImportService {
     try {
       localStorage.setItem(key, JSON.stringify(value));
     } catch (error) {
-      console.error(`❌ Erro ao salvar ${key} no localStorage:`, error);
       handleError(error, 'localStorage');
       throw error;
     }

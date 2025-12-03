@@ -1,4 +1,5 @@
 import React, { createContext, useState, useEffect } from 'react';
+import useLocalStorage from '../hooks/useLocalStorage';
 
 /**
  * Context type for theme management
@@ -18,13 +19,9 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
  * @param children - Child components that will have access to the context
  */
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
-    const stored = localStorage.getItem('theme');
-    return (stored as 'light' | 'dark') || 'light';
-  });
+  const [theme, setTheme] = useLocalStorage<'light' | 'dark'>('theme', 'light');
 
   useEffect(() => {
-    localStorage.setItem('theme', theme);
     if (theme === 'dark') {
       document.documentElement.classList.add('dark');
     } else {

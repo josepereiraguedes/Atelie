@@ -1,17 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, memo, useCallback } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { User, Upload, Edit3 } from 'lucide-react';
 
-const UserProfile: React.FC = () => {
+const UserProfile: React.FC = memo(() => {
   const { user, signOut, updateUser } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState(user?.avatar_url || '');
   const [userName, setUserName] = useState(user?.name || 'Usuário');
 
-  // Atualizar estado quando o usuário mudar
   useEffect(() => {
-    console.log('🔄 UserProfile - Usuário atualizado:', user);
     if (user) {
       setAvatarUrl(user.avatar_url || '');
       setUserName(user.name || 'Usuário');
@@ -22,7 +20,7 @@ const UserProfile: React.FC = () => {
 
   const userEmail = user.email || '';
 
-  const handleAvatarUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAvatarUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
@@ -30,40 +28,41 @@ const UserProfile: React.FC = () => {
         const result = e.target?.result as string;
         setAvatarUrl(result);
         
-        // Atualizar o perfil do usuário com a nova foto
         try {
-          console.log('💾 Salvando avatar para usuário:', user.id);
           await updateUser(user.id, { avatar_url: result });
-          console.log('✅ Avatar salvo com sucesso');
         } catch (error) {
           console.error('Erro ao atualizar avatar:', error);
         }
       };
       reader.readAsDataURL(file);
     }
-  };
+  }, [user, updateUser]);
 
-  const handleSaveAvatar = async () => {
+  const handleSaveAvatar = useCallback(async () => {
     try {
-      console.log('💾 Salvando avatar para usuário:', user.id);
       await updateUser(user.id, { avatar_url: avatarUrl });
       setIsEditing(false);
-      console.log('✅ Avatar salvo com sucesso');
     } catch (error) {
       console.error('Erro ao salvar avatar:', error);
     }
-  };
+  }, [user, avatarUrl, updateUser]);
 
-  const handleSaveName = async () => {
+  const handleSaveName = useCallback(async () => {
     try {
-      console.log('💾 Salvando nome para usuário:', user.id, 'Novo nome:', userName);
       await updateUser(user.id, { name: userName });
       setIsEditingName(false);
-      console.log('✅ Nome salvo com sucesso');
     } catch (error) {
       console.error('Erro ao salvar nome:', error);
     }
-  };
+  }, [user, userName, updateUser]);
+
+  const handleSignOut = useCallback(async () => {
+    try {
+      await signOut();
+    } catch (error) {
+      console.error('Erro ao fazer logout:', error);
+    }
+  }, [signOut]);
 
   return (
     <div className="flex flex-col space-y-3">
@@ -153,7 +152,7 @@ const UserProfile: React.FC = () => {
           </button>
         )}
         <button
-          onClick={() => signOut()}
+          onClick={handleSignOut}
           className="inline-flex items-center px-2 py-1 border border-transparent text-xs font-medium rounded text-red-700 bg-red-100 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 dark:bg-red-900 dark:text-red-100 dark:hover:bg-red-800"
         >
           Sair
@@ -161,6 +160,6 @@ const UserProfile: React.FC = () => {
       </div>
     </div>
   );
-};
+});
 
 export default UserProfile;

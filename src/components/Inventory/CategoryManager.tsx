@@ -62,43 +62,43 @@ const CategoryManager: React.FC<CategoryManagerProps> = ({
       ) : (
         <div className="space-y-1">
           {sortedCategories.map(category => (
-            <div key={category}>
+            <div key={category.id}>
               <div 
                 className="flex items-center justify-between p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer"
-                onClick={() => handleCategoryClick(category)}
+                onClick={() => handleCategoryClick(category.name)}
               >
                 <div className="flex items-center">
                   <button 
                     onClick={(e) => {
                       e.stopPropagation();
-                      toggleCategory(category);
+                      toggleCategory(category.name);
                     }}
                     className="mr-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
                   >
-                    {(subcategories[category] || []).length > 0 && (
-                      expandedCategories.has(category) ? 
+                    {(subcategories[category.name] || []).length > 0 && (
+                      expandedCategories.has(category.name) ? 
                       <ChevronDown className="w-4 h-4" /> : 
                       <ChevronRight className="w-4 h-4" />
                     )}
                   </button>
-                  <span className="text-gray-900 dark:text-white">{category}</span>
+                  <span className="text-gray-900 dark:text-white">{category.name}</span>
                   <span className="ml-2 text-xs text-gray-500 dark:text-gray-400">
-                    ({products.filter(p => p.category === category).length})
+                    ({products.filter(p => p.category === category.name).length})
                   </span>
                 </div>
               </div>
 
-              {expandedCategories.has(category) && (subcategories[category] || []).length > 0 && (
+              {expandedCategories.has(category.name) && (subcategories[category.name] || []).length > 0 && (
                 <div className="ml-6 space-y-1">
-                  {(subcategories[category] || []).map(subcategory => (
+                  {(subcategories[category.name] || []).map(subcategory => (
                     <div 
                       key={subcategory}
                       className="flex items-center justify-between p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer ml-4"
-                      onClick={() => handleSubcategoryClick(category, subcategory)}
+                      onClick={() => handleSubcategoryClick(category.name, subcategory)}
                     >
                       <span className="text-gray-700 dark:text-gray-300">{subcategory}</span>
                       <span className="text-xs text-gray-500 dark:text-gray-400">
-                        ({products.filter(p => p.category === category && p.subcategory === subcategory).length})
+                        ({products.filter(p => p.category === category.name && p.subcategory === subcategory).length})
                       </span>
                     </div>
                   ))}

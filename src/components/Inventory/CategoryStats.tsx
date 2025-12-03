@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, memo } from 'react';
 import { useLocalDatabase } from '../../contexts/LocalDatabaseContext';
 import { Package, AlertTriangle, TrendingUp } from 'lucide-react';
 
@@ -6,7 +6,7 @@ interface CategoryStatsProps {
   className?: string;
 }
 
-const CategoryStats: React.FC<CategoryStatsProps> = ({ className = '' }) => {
+const CategoryStats: React.FC<CategoryStatsProps> = memo(({ className = '' }) => {
   const { products } = useLocalDatabase();
 
   // Estatísticas por categoria
@@ -96,6 +96,6 @@ const CategoryStats: React.FC<CategoryStatsProps> = ({ className = '' }) => {
       </div>
     </div>
   );
-};
+});
 
 export default CategoryStats;

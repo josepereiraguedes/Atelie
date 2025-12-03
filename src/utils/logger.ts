@@ -68,6 +68,11 @@ class Logger {
     // Skip if log level is below minimum
     if (!this.shouldLog(level)) return;
 
+    // Em produção, apenas registramos erros e avisos
+    if (process.env.NODE_ENV === 'production' && level !== 'error' && level !== 'warn') {
+      return;
+    }
+
     const logEntry: LogEntry = {
       level,
       message,
@@ -133,6 +138,6 @@ class Logger {
 }
 
 // Create and export a default logger instance
-export const logger = new Logger(process.env.NODE_ENV === 'development' ? 'debug' : 'info');
+export const logger = new Logger(process.env.NODE_ENV === 'development' ? 'debug' : 'warn');
 
 export default Logger;

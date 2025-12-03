@@ -43,7 +43,8 @@ class LocalAuthService {
    */
   async login(email: string, password: string): Promise<LocalUser | null> {
     try {
-      console.log('🔍 Tentando login para:', email);
+      // Remover console.log para produção
+      // console.log('🔍 Tentando login para:', email);
       
       // Buscar usuário nos usuários pré-cadastrados
       let user = PRE_REGISTERED_USERS.find(u => u.email === email);
@@ -55,32 +56,38 @@ class LocalAuthService {
       }
       
       if (!user) {
-        console.log('❌ Usuário não encontrado:', email);
+        // Remover console.log para produção
+        // console.log('❌ Usuário não encontrado:', email);
         return null;
       }
       
-      console.log('👤 Usuário encontrado:', user.email, 'ID:', user.id);
-      console.log('🔑 Hash armazenado:', user.password_hash);
-      console.log('🔓 Senha fornecida:', password);
+      // Remover console.log para produção
+      // console.log('👤 Usuário encontrado:', user.email, 'ID:', user.id);
+      // console.log('🔑 Hash armazenado:', user.password_hash);
+      // console.log('🔓 Senha fornecida:', password);
       
       // Verificar senha usando bcrypt
       const isPasswordValid = await bcrypt.compare(password, user.password_hash);
       
-      console.log('✅ Senha válida:', isPasswordValid);
+      // Remover console.log para produção
+      // console.log('✅ Senha válida:', isPasswordValid);
       
       if (!isPasswordValid) {
-        console.log('❌ Senha inválida para:', email);
+        // Remover console.log para produção
+        // console.log('❌ Senha inválida para:', email);
         return null;
       }
       
-      console.log('🎉 Autenticação bem-sucedida para:', email, 'ID:', user.id);
+      // Remover console.log para produção
+      // console.log('🎉 Autenticação bem-sucedida para:', email, 'ID:', user.id);
       
       // Verificar se há uma versão atualizada do usuário no localStorage
       const localUsers = this.getFromLocalStorage<LocalUser[]>('local_users', []);
       const updatedUser = localUsers.find(u => u.id === user!.id);
       
       if (updatedUser) {
-        console.log('🔄 Usando versão atualizada do usuário do localStorage:', updatedUser);
+        // Remover console.log para produção
+        // console.log('🔄 Usando versão atualizada do usuário do localStorage:', updatedUser);
         return updatedUser;
       }
       
@@ -90,7 +97,8 @@ class LocalAuthService {
         updated_at: user.updated_at
       };
     } catch (error) {
-      console.error('💥 Erro na autenticação:', error);
+      // Remover console.log para produção
+      // console.error('💥 Erro na autenticação:', error);
       return null;
     }
   }
@@ -109,23 +117,39 @@ class LocalAuthService {
    * @returns Usuário ou null
    */
   getUserById(id: string): LocalUser | null {
-    // Primeiro verificar no localStorage
-    const localUsers = this.getFromLocalStorage<LocalUser[]>('local_users', []);
-    const localUser = localUsers.find(u => u.id === id);
-    if (localUser) {
-      console.log('👤 Usuário encontrado no localStorage:', localUser);
-      return localUser;
+    try {
+      // Primeiro verificar no localStorage
+      const localUsers = this.getFromLocalStorage<LocalUser[]>('local_users', []);
+      const localUser = localUsers.find(u => u.id === id);
+      if (localUser) {
+        // Remover console.log para produção
+        // console.log('👤 Usuário encontrado no localStorage:', localUser);
+        return localUser;
+      }
+      
+      // Se não encontrar no localStorage, verificar nos pré-cadastrados
+      const preRegisteredUser = PRE_REGISTERED_USERS.find(u => u.id === id);
+      if (preRegisteredUser) {
+        // Remover console.log para produção
+        // console.log('👤 Usuário encontrado nos pré-cadastrados:', preRegisteredUser);
+        return preRegisteredUser;
+      }
+      
+      // Remover console.log para produção
+      // console.log('❌ Usuário não encontrado para ID:', id);
+      return null;
+    } catch (error) {
+      // Remover console.log para produção
+      // console.error('💥 Erro ao obter usuário por ID:', error);
+      // Fallback para usuários pré-cadastrados
+      const preRegisteredUser = PRE_REGISTERED_USERS.find(u => u.id === id);
+      if (preRegisteredUser) {
+        // Remover console.log para produção
+        // console.log('👤 Usuário encontrado nos pré-cadastrados (fallback):', preRegisteredUser);
+        return preRegisteredUser;
+      }
+      return null;
     }
-    
-    // Se não encontrar no localStorage, verificar nos pré-cadastrados
-    const preRegisteredUser = PRE_REGISTERED_USERS.find(u => u.id === id);
-    if (preRegisteredUser) {
-      console.log('👤 Usuário encontrado nos pré-cadastrados:', preRegisteredUser);
-      return preRegisteredUser;
-    }
-    
-    console.log('❌ Usuário não encontrado para ID:', id);
-    return null;
   }
   
   /**
@@ -136,11 +160,13 @@ class LocalAuthService {
    */
   async updateUserProfile(userId: string, updates: Partial<LocalUser>): Promise<LocalUser | null> {
     try {
-      console.log('🔄 Atualizando perfil do usuário:', userId, updates);
+      // Remover console.log para produção
+      // console.log('🔄 Atualizando perfil do usuário:', userId, updates);
       
       // Obter usuários do localStorage
       let users = this.getFromLocalStorage<LocalUser[]>('local_users', []);
-      console.log('📂 Usuários atuais no localStorage:', users);
+      // Remover console.log para produção
+      // console.log('📂 Usuários atuais no localStorage:', users);
       
       // Encontrar o usuário
       const userIndex = users.findIndex(u => u.id === userId);
@@ -158,9 +184,11 @@ class LocalAuthService {
             updated_at: new Date().toISOString()
           };
           users.push(updatedUser);
-          console.log('🆕 Adicionando usuário pré-cadastrado ao localStorage:', updatedUser);
+          // Remover console.log para produção
+          // console.log('🆕 Adicionando usuário pré-cadastrado ao localStorage:', updatedUser);
         } else {
-          console.log('❌ Usuário não encontrado para atualização:', userId);
+          // Remover console.log para produção
+          // console.log('❌ Usuário não encontrado para atualização:', userId);
           return null;
         }
       } else {
@@ -171,17 +199,20 @@ class LocalAuthService {
           updated_at: new Date().toISOString()
         };
         users[userIndex] = updatedUser;
-        console.log('✏️ Atualizando usuário existente no localStorage:', updatedUser);
+        // Remover console.log para produção
+        // console.log('✏️ Atualizando usuário existente no localStorage:', updatedUser);
       }
       
       // Salvar no localStorage para persistência
       this.saveToLocalStorage('local_users', users);
       
-      console.log('✅ Usuário atualizado e salvo no localStorage:', updatedUser);
+      // Remover console.log para produção
+      // console.log('✅ Usuário atualizado e salvo no localStorage:', updatedUser);
       
       return updatedUser;
     } catch (error) {
-      console.error('💥 Erro ao atualizar perfil:', error);
+      // Remover console.log para produção
+      // console.error('💥 Erro ao atualizar perfil:', error);
       return null;
     }
   }
@@ -195,19 +226,22 @@ class LocalAuthService {
    */
   async updateUserCredentials(userId: string, currentPassword: string, newPassword: string): Promise<boolean> {
     try {
-      console.log('🔄 Atualizando credenciais do usuário:', userId);
+      // Remover console.log para produção
+      // console.log('🔄 Atualizando credenciais do usuário:', userId);
       
       // Obter o usuário atual
       const currentUser = this.getUserById(userId);
       if (!currentUser) {
-        console.log('❌ Usuário não encontrado para atualização de credenciais:', userId);
+        // Remover console.log para produção
+        // console.log('❌ Usuário não encontrado para atualização de credenciais:', userId);
         return false;
       }
       
       // Verificar se a senha atual está correta
       const isCurrentPasswordValid = await bcrypt.compare(currentPassword, currentUser.password_hash);
       if (!isCurrentPasswordValid) {
-        console.log('❌ Senha atual inválida para usuário:', userId);
+        // Remover console.log para produção
+        // console.log('❌ Senha atual inválida para usuário:', userId);
         return false;
       }
       
@@ -243,11 +277,27 @@ class LocalAuthService {
       // Salvar no localStorage para persistência
       this.saveToLocalStorage('local_users', users);
       
-      console.log('✅ Credenciais do usuário atualizadas e salvas no localStorage:', userId);
+      // Remover console.log para produção
+      // console.log('✅ Credenciais do usuário atualizadas e salvas no localStorage:', userId);
       
       return true;
     } catch (error) {
-      console.error('💥 Erro ao atualizar credenciais:', error);
+      // Remover console.log para produção
+      // console.error('💥 Erro ao atualizar credenciais:', error);
+      return false;
+    }
+  }
+  
+  /**
+   * Verifica se o localStorage está disponível
+   */
+  private isLocalStorageAvailable(): boolean {
+    try {
+      const testKey = '__test_localstorage__';
+      window.localStorage.setItem(testKey, testKey);
+      window.localStorage.removeItem(testKey);
+      return true;
+    } catch (e) {
       return false;
     }
   }
@@ -257,11 +307,20 @@ class LocalAuthService {
    */
   private getFromLocalStorage<T>(key: string, defaultValue: T): T {
     try {
+      // Verificar se o localStorage está disponível
+      if (!this.isLocalStorageAvailable()) {
+        // Remover console.log para produção
+        // console.warn(`⚠️ localStorage não disponível, usando valor padrão para ${key}`);
+        return defaultValue;
+      }
+      
       const item = localStorage.getItem(key);
-      console.log(`📥 Obtendo ${key} do localStorage:`, item ? item.substring(0, 100) + '...' : 'null');
+      // Remover console.log para produção
+      // console.log(`📥 Obtendo ${key} do localStorage:`, item ? item.substring(0, 100) + '...' : 'null');
       return item ? JSON.parse(item) : defaultValue;
     } catch (error) {
-      console.error(`Erro ao obter ${key} do localStorage:`, error);
+      // Remover console.log para produção
+      // console.error(`Erro ao obter ${key} do localStorage:`, error);
       return defaultValue;
     }
   }
@@ -271,11 +330,21 @@ class LocalAuthService {
    */
   private saveToLocalStorage<T>(key: string, value: T): void {
     try {
-      console.log(`💾 Salvando ${key} no localStorage. Tamanho:`, JSON.stringify(value).length);
+      // Verificar se o localStorage está disponível
+      if (!this.isLocalStorageAvailable()) {
+        // Remover console.log para produção
+        // console.warn(`⚠️ localStorage não disponível, não foi possível salvar ${key}`);
+        return;
+      }
+      
+      // Remover console.log para produção
+      // console.log(`💾 Salvando ${key} no localStorage. Tamanho:`, JSON.stringify(value).length);
       localStorage.setItem(key, JSON.stringify(value));
-      console.log(`✅ ${key} salvo com sucesso no localStorage`);
+      // Remover console.log para produção
+      // console.log(`✅ ${key} salvo com sucesso no localStorage`);
     } catch (error) {
-      console.error(`Erro ao salvar ${key} no localStorage:`, error);
+      // Remover console.log para produção
+      // console.error(`Erro ao salvar ${key} no localStorage:`, error);
     }
   }
 }

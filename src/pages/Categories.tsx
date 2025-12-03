@@ -5,7 +5,7 @@ import { motion, HTMLMotionProps } from 'framer-motion';
 import toast from 'react-hot-toast';
 
 const Categories: React.FC = () => {
-  const { products, categories, subcategories, addCategory, addSubcategory, updateCategory, updateSubcategory } = useLocalDatabase();
+  const { products, categories, subcategories, addCategory, addSubcategory, updateCategory, updateSubcategory, deleteCategory, deleteSubcategory } = useLocalDatabase();
   const [newCategory, setNewCategory] = useState('');
   const [newSubcategory, setNewSubcategory] = useState('');
   const [editingCategory, setEditingCategory] = useState<{oldName: string, newName: string} | null>(null);
@@ -13,7 +13,7 @@ const Categories: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState('');
 
   const sortedCategories = useMemo(() => {
-    return [...categories].sort();
+    return [...categories].sort((a, b) => a.name.localeCompare(b.name));
   }, [categories]);
 
   const handleAddCategory = async () => {
@@ -23,7 +23,7 @@ const Categories: React.FC = () => {
     }
 
     try {
-      await addCategory(newCategory);
+      await addCategory({ name: newCategory });
       toast.success(`Categoria "${newCategory}" adicionada com sucesso!`);
       setNewCategory('');
     } catch (error) {
@@ -56,8 +56,15 @@ const Categories: React.FC = () => {
   const handleRenameCategory = async () => {
     if (!editingCategory) return;
 
+    // Encontrar a categoria pelo nome antigo
+    const categoryToUpdate = categories.find(c => c.name === editingCategory.oldName);
+    if (!categoryToUpdate) {
+      toast.error('Categoria não encontrada');
+      return;
+    }
+
     try {
-      await updateCategory(editingCategory.oldName, editingCategory.newName);
+      await updateCategory(categoryToUpdate.id, { name: editingCategory.newName });
       toast.success(`Categoria renomeada de "${editingCategory.oldName}" para "${editingCategory.newName}"`);
       setEditingCategory(null);
     } catch (error) {
@@ -83,17 +90,30 @@ const Categories: React.FC = () => {
     }
   };
 
-  const handleDeleteCategory = async (category: string) => {
-    // Verificar se há produtos nesta categoria
-    const productsInCategory = products.filter(p => p.category === category);
-    
-    if (productsInCategory.length > 0) {
-      toast.error(`Não é possível excluir a categoria "${category}" pois existem ${productsInCategory.length} produtos associados a ela.`);
+  const handleDeleteCategory = async (categoryName: string) => {
+    // Encontrar a categoria pelo nome
+    const categoryToDelete = categories.find(c => c.name === categoryName);
+    if (!categoryToDelete) {
+      toast.error('Categoria não encontrada');
       return;
     }
 
-    // Se não há produtos, podemos "excluir" a categoria simplesmente não a usando mais
-    toast.success(`Categoria "${category}" pode ser removida (não há produtos associados)`);
+    // Verificar se há produtos nesta categoria
+    const productsInCategory = products.filter(p => p.category === categoryName);
+    
+    if (productsInCategory.length > 0) {
+      toast.error(`Não é possível excluir a categoria "${categoryName}" pois existem ${productsInCategory.length} produtos associados a ela.`);
+      return;
+    }
+
+    // Se não há produtos, podemos excluir a categoria
+    try {
+      await deleteCategory(categoryToDelete.id);
+      toast.success(`Categoria "${categoryName}" excluída com sucesso!`);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Erro ao excluir categoria');
+      console.error('Erro ao excluir categoria:', error);
+    }
   };
 
   const handleDeleteSubcategory = async (category: string, subcategory: string) => {
@@ -107,8 +127,14 @@ const Categories: React.FC = () => {
       return;
     }
 
-    // Se não há produtos, podemos "excluir" a subcategoria simplesmente não a usando mais
-    toast.success(`Subcategoria "${subcategory}" pode ser removida (não há produtos associados)`);
+    // Se não há produtos, podemos excluir a subcategoria
+    try {
+      await deleteSubcategory(category, subcategory);
+      toast.success(`Subcategoria "${subcategory}" excluída com sucesso!`);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Erro ao excluir subcategoria');
+      console.error('Erro ao excluir subcategoria:', error);
+    }
   };
 
   return (
@@ -177,7 +203,7 @@ const Categories: React.FC = () => {
               >
                 <option value="">Selecione uma categoria</option>
                 {sortedCategories.map(category => (
-                  <option key={category} value={category}>{category}</option>
+                  <option key={category.id} value={category.name}>{category.name}</option>
                 ))}
               </select>
             </div>
@@ -229,9 +255,9 @@ const Categories: React.FC = () => {
         ) : (
           <div className="space-y-4">
             {sortedCategories.map(category => (
-              <div key={category} className="border border-gray-200 dark:border-gray-700 rounded-lg">
+              <div key={category.id} className="border border-gray-200 dark:border-gray-700 rounded-lg">
                 <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700/50 rounded-t-lg">
-                  {editingCategory?.oldName === category ? (
+                  {editingCategory?.oldName === category.name ? (
                     <div className="flex items-center space-x-2 flex-1">
                       <input
                         type="text"
@@ -256,41 +282,42 @@ const Categories: React.FC = () => {
                     </div>
                   ) : (
                     <div className="flex items-center space-x-2">
-                      <h3 className="font-medium text-gray-900 dark:text-white">{category}</h3>
+                      <h3 className="font-medium text-gray-900 dark:text-white">{category.name}</h3>
                       <span className="text-xs text-gray-500 dark:text-gray-400">
-                        ({products.filter(p => p.category === category).length} produtos)
+                        ({products.filter(p => p.category === category.name).length} produtos)
                       </span>
                     </div>
                   )}
                   
                   <div className="flex space-x-1">
                     <button
-                      onClick={() => setEditingCategory({oldName: category, newName: category})}
+                      onClick={() => setEditingCategory({oldName: category.name, newName: category.name})}
                       className="p-1.5 text-blue-600 hover:bg-blue-100 dark:hover:bg-blue-900/50 rounded-md transition-colors"
                     >
                       <Edit2 className="w-4 h-4" />
                     </button>
                     <button
-                      onClick={() => handleDeleteCategory(category)}
+                      onClick={() => handleDeleteCategory(category.name)}
                       className="p-1.5 text-red-600 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-md transition-colors"
+                      disabled={products.filter(p => p.category === category.name).length > 0}
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
                 </div>
                 
-                {subcategories[category]?.length > 0 && (
+                {subcategories[category.name]?.length > 0 && (
                   <div className="p-4 border-t border-gray-200 dark:border-gray-700">
                     <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       Subcategorias:
                     </h4>
                     <div className="flex flex-wrap gap-2">
-                      {subcategories[category].map(subcategory => (
+                      {(subcategories[category.name] || []).map(subcategory => (
                         <div 
                           key={subcategory} 
                           className="flex items-center bg-gray-100 dark:bg-gray-700 rounded-md px-3 py-1.5"
                         >
-                          {editingSubcategory?.category === category && editingSubcategory?.oldName === subcategory ? (
+                          {editingSubcategory?.category === category.name && editingSubcategory?.oldName === subcategory ? (
                             <div className="flex items-center space-x-2">
                               <input
                                 type="text"
@@ -321,12 +348,12 @@ const Categories: React.FC = () => {
                                 {subcategory}
                               </span>
                               <span className="text-xs text-gray-500 dark:text-gray-400 ml-1">
-                                ({products.filter(p => p.category === category && p.subcategory === subcategory).length})
+                                ({products.filter(p => p.category === category.name && p.subcategory === subcategory).length})
                               </span>
                               <div className="flex space-x-1 ml-2">
                                 <button
                                   onClick={() => setEditingSubcategory({
-                                    category, 
+                                    category: category.name, 
                                     oldName: subcategory, 
                                     newName: subcategory
                                   })}
@@ -335,8 +362,9 @@ const Categories: React.FC = () => {
                                   <Edit2 className="w-3 h-3" />
                                 </button>
                                 <button
-                                  onClick={() => handleDeleteSubcategory(category, subcategory)}
+                                  onClick={() => handleDeleteSubcategory(category.name, subcategory)}
                                   className="p-0.5 text-red-600 hover:bg-red-100 dark:hover:bg-red-900/50 rounded transition-colors"
+                                  disabled={products.filter(p => p.category === category.name && p.subcategory === subcategory).length > 0}
                                 >
                                   <Trash2 className="w-3 h-3" />
                                 </button>

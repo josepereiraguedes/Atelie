@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { Save, Upload, Building, Palette, User, Database, Download, Info, Key, Bell } from 'lucide-react';
+import { Save, Upload, Building, Palette, User, Database, Download, Info, Key, Bell, ShoppingCart, TrendingUp, BarChart3, Trash2 } from 'lucide-react';
 import { useConfig } from '../contexts/ConfigContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
 import { motion, HTMLMotionProps } from 'framer-motion';
 import toast from 'react-hot-toast';
 import DataExportImport from '../components/DataExportImport';
+import MarketplaceConfigSummary from '../components/marketplace/MarketplaceConfigSummary';
 
 const Settings: React.FC = () => {
   const { company, updateCompany, notifications, updateNotifications } = useConfig();
@@ -13,7 +14,8 @@ const Settings: React.FC = () => {
   const { user, updateUser, updateUserCredentials } = useAuth();
   const [formData, setFormData] = useState({
     name: company.name,
-    logo: company.logo || ''
+    logo: company.logo || '',
+    showLogo: company.hasOwnProperty('showLogo') ? company.showLogo : true
   });
   const [profileData, setProfileData] = useState({
     name: user?.name || '',
@@ -38,7 +40,11 @@ const Settings: React.FC = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    updateCompany(formData);
+    updateCompany({
+      name: formData.name,
+      logo: formData.logo || undefined, // Garantir que seja undefined se vazio
+      showLogo: formData.showLogo
+    });
     toast.success('Configurações salvas com sucesso!');
   };
 
@@ -63,7 +69,7 @@ const Settings: React.FC = () => {
     e.preventDefault();
     try {
       let success = true;
-      let messages: string[] = [];
+      const messages: string[] = [];
 
       // Verificar se há alteração de e-mail
       const hasEmailChange = emailData.newEmail.trim() !== '';
@@ -173,6 +179,10 @@ const Settings: React.FC = () => {
       };
       reader.readAsDataURL(file);
     }
+  };
+
+  const handleRemoveLogo = () => {
+    setFormData(prev => ({ ...prev, logo: '', showLogo: false }));
   };
 
   return (
@@ -308,7 +318,7 @@ const Settings: React.FC = () => {
                           className="w-10 h-10 object-contain border border-gray-300 rounded-lg"
                         />
                       )}
-                      <div>
+                      <div className="flex space-x-2">
                         <input
                           type="file"
                           accept="image/*"
@@ -323,9 +333,35 @@ const Settings: React.FC = () => {
                           <Upload className="w-3.5 h-3.5 mr-1.5" />
                           Logo
                         </label>
+                        
+                        {formData.logo && (
+                          <button
+                            type="button"
+                            onClick={handleRemoveLogo}
+                            className="inline-flex items-center px-3 py-1.5 text-sm border border-red-300 dark:border-red-600 rounded-lg cursor-pointer hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors text-red-600 dark:text-red-400"
+                          >
+                            <Trash2 className="w-3.5 h-3.5 mr-1.5" />
+                            Remover
+                          </button>
+                        )}
                       </div>
                     </div>
                   </div>
+
+                  {formData.logo && (
+                    <div className="flex items-center">
+                      <input
+                        type="checkbox"
+                        id="show-logo-toggle"
+                        checked={formData.showLogo}
+                        onChange={(e) => setFormData(prev => ({ ...prev, showLogo: e.target.checked }))}
+                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                      />
+                      <label htmlFor="show-logo-toggle" className="ml-2 block text-sm text-gray-900 dark:text-white">
+                        Mostrar logo em vez do nome
+                      </label>
+                    </div>
+                  )}
 
                   <button
                     type="submit"
@@ -640,7 +676,83 @@ const Settings: React.FC = () => {
           
           <DataExportImport />
         </motion.div>
+        
+        {/* Configurações de Marketplace */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.6 }}
+          {...({ className: "bg-white dark:bg-gray-800 rounded-xl shadow-sm p-5" } as HTMLMotionProps<'div'>)}
+        >
+          <div className="flex items-center mb-4">
+            <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
+              <ShoppingCart className="w-5 h-5 text-green-600 dark:text-green-400" />
+            </div>
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white ml-3">
+              Marketplaces
+            </h2>
+          </div>
+          
+          <div className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+            <p>Configure as taxas e custos para cada marketplace onde você vende</p>
+          </div>
+          
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+            <a
+              href="#/marketplace-settings"
+              className="inline-flex items-center px-4 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition-colors"
+            >
+              <Building className="w-4 h-4 mr-1.5" />
+              Configurar Marketplaces
+            </a>
+            <a
+              href="#/product-pricing"
+              className="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              <TrendingUp className="w-4 h-4 mr-1.5" />
+              Precificar Produtos
+            </a>
+            <a
+              href="#/marketplace-settings"
+              className="inline-flex items-center px-4 py-2 bg-purple-600 text-white text-sm rounded-lg hover:bg-purple-700 transition-colors"
+            >
+              <TrendingUp className="w-4 h-4 mr-1.5" />
+              Gerenciar Marketplaces
+            </a>
+            <a
+              href="#/marketplace-comparison"
+              className="inline-flex items-center px-4 py-2 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700 transition-colors"
+            >
+              <BarChart3 className="w-4 h-4 mr-1.5" />
+              Comparar Marketplaces
+            </a>
+            <a
+              href="#/pricing-reports"
+              className="inline-flex items-center px-4 py-2 bg-yellow-600 text-white text-sm rounded-lg hover:bg-yellow-700 transition-colors"
+            >
+              <BarChart3 className="w-4 h-4 mr-1.5" />
+              Relatórios de Precificação
+            </a>
+            <a
+              href="#/price-sensitivity-analysis"
+              className="inline-flex items-center px-4 py-2 bg-orange-600 text-white text-sm rounded-lg hover:bg-orange-700 transition-colors"
+            >
+              <BarChart3 className="w-4 h-4 mr-1.5" />
+              Análise de Sensibilidade
+            </a>
+            <a
+              href="#/cost-comparison"
+              className="inline-flex items-center px-4 py-2 bg-cyan-600 text-white text-sm rounded-lg hover:bg-cyan-700 transition-colors"
+            >
+              <BarChart3 className="w-4 h-4 mr-1.5" />
+              Comparação de Custos
+            </a>
+          </div>
+        </motion.div>
       </div>
+
+      {/* Resumo de Configuração de Marketplaces */}
+      <MarketplaceConfigSummary />
 
       {/* Informações do Sistema */}
       <motion.div

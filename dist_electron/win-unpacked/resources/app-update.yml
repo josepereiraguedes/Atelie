@@ -1,0 +1,5 @@
+owner: seu-usuario
+repo: sistema-gestao-atelie
+provider: github
+releaseType: release
+updaterCacheDirName: sistema-gestao-estoque-updater

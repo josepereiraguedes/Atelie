@@ -191,6 +191,16 @@ const getUserFriendlyMessage = (error: AppError): string => {
         return 'Erro de conexão. Por favor, verifique sua internet e tente novamente.';
       case 'localstorage':
         return 'Erro ao acessar o armazenamento local. Por favor, verifique as permissões do navegador.';
+      case 'dataexport':
+        return 'Erro ao exportar dados. Por favor, tente novamente.';
+      case 'dataimport':
+        return 'Erro ao importar dados. Por favor, verifique o arquivo e tente novamente.';
+      case 'backup':
+        return 'Erro ao criar backup. Por favor, tente novamente.';
+      case 'backuprestore':
+        return 'Erro ao restaurar backup. Por favor, tente novamente.';
+      case 'backupremove':
+        return 'Erro ao remover backup. Por favor, tente novamente.';
       default:
         return 'Ocorreu um erro inesperado. Por favor, tente novamente.';
     }

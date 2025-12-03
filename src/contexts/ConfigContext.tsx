@@ -1,4 +1,5 @@
-import React, { createContext, useState, useEffect } from 'react';
+import React, { createContext, useState } from 'react';
+import useLocalStorage from '../hooks/useLocalStorage';
 
 /**
  * Interface representing company configuration settings
@@ -8,6 +9,8 @@ interface CompanyConfig {
   name: string;
   /** Optional logo URL for the company */
   logo?: string;
+  /** Whether to show logo instead of company name */
+  showLogo?: boolean;
 }
 
 /**
@@ -44,27 +47,13 @@ const ConfigContext = createContext<ConfigContextType | undefined>(undefined);
  * @param children - Child components that will have access to the context
  */
 export const ConfigProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [company, setCompany] = useState<CompanyConfig>(() => {
-    const stored = localStorage.getItem('company-config');
-    return stored ? JSON.parse(stored) : { name: 'Minha Empresa' };
+  const [company, setCompany] = useLocalStorage<CompanyConfig>('company-config', { name: 'Minha Empresa' });
+
+  const [notifications, setNotifications] = useLocalStorage<NotificationSettings>('notification-settings', { 
+    lowStockAlerts: true, 
+    toastNotifications: true, 
+    dashboardAlerts: true 
   });
-
-  const [notifications, setNotifications] = useState<NotificationSettings>(() => {
-    const stored = localStorage.getItem('notification-settings');
-    return stored ? JSON.parse(stored) : { 
-      lowStockAlerts: true, 
-      toastNotifications: true, 
-      dashboardAlerts: true 
-    };
-  });
-
-  useEffect(() => {
-    localStorage.setItem('company-config', JSON.stringify(company));
-  }, [company]);
-
-  useEffect(() => {
-    localStorage.setItem('notification-settings', JSON.stringify(notifications));
-  }, [notifications]);
 
   /**
    * Update company configuration settings

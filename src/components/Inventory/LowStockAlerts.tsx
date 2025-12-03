@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { AlertTriangle, Package } from 'lucide-react';
 import { useLocalDatabase } from '../../contexts/LocalDatabaseContext';
 
@@ -8,7 +8,7 @@ interface LowStockAlertsProps {
   className?: string;
 }
 
-const LowStockAlerts: React.FC<LowStockAlertsProps> = ({ 
+const LowStockAlerts: React.FC<LowStockAlertsProps> = memo(({ 
   limit = 5, 
   showTitle = true,
   className = ''
@@ -71,6 +71,6 @@ const LowStockAlerts: React.FC<LowStockAlertsProps> = ({
       </div>
     </div>
   );
-};
+});
 
 export default LowStockAlerts;

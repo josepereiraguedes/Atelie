@@ -12,9 +12,7 @@ function App() {
       <ConfigProvider>
         <ThemeProvider>
           <NotificationProvider>
-            <LocalDatabaseProvider>
-              <AppContent />
-            </LocalDatabaseProvider>
+            <AppContent />
           </NotificationProvider>
         </ThemeProvider>
       </ConfigProvider>

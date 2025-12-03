@@ -1,11 +1,11 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, memo, useCallback, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useLocalDatabase } from '../contexts/LocalDatabaseContext';
-import { dataExportImportService, ExportedData, BackupData } from '../services/dataExportImport';
+import { dataExportImportService, BackupData } from '../services/dataExportImport';
 import toast from 'react-hot-toast';
 import { Download, Info } from 'lucide-react';
 
-const DataExportImport: React.FC = () => {
+const DataExportImport: React.FC = memo(() => {
   const { user } = useAuth();
   const { products, clients, transactions } = useLocalDatabase();
   const [isExporting, setIsExporting] = useState(false);
@@ -15,7 +15,7 @@ const DataExportImport: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Carregar backups ao montar o componente
-  React.useEffect(() => {
+  useEffect(() => {
     const loadedBackups = dataExportImportService.getBackups();
     setBackups(loadedBackups);
   }, []);
@@ -23,7 +23,7 @@ const DataExportImport: React.FC = () => {
   /**
    * Função para exportar dados
    */
-  const handleExport = async () => {
+  const handleExport = useCallback(async () => {
     if (!user) return;
     
     setIsExporting(true);
@@ -43,19 +43,19 @@ const DataExportImport: React.FC = () => {
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
       
-      toast.success('Dados exportados!');
+      toast.success('Dados exportados com sucesso!');
     } catch (error) {
       console.error('Erro ao exportar dados:', error);
       toast.error('Erro ao exportar dados');
     } finally {
       setIsExporting(false);
     }
-  };
+  }, [user]);
 
   /**
    * Função para importar dados
    */
-  const handleImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImport = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
     if (!user || !event.target.files || event.target.files.length === 0) return;
     
     setIsImporting(true);
@@ -70,27 +70,28 @@ const DataExportImport: React.FC = () => {
       
       await dataExportImportService.importData(file, user.id);
       
-      toast.success('Dados importados!');
+      toast.success('Dados importados com sucesso!');
       
       // Limpar o input
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
       
-      // Recarregar dados
-      window.location.reload();
+      // Atualizar lista de backups
+      const updatedBackups = dataExportImportService.getBackups();
+      setBackups(updatedBackups);
     } catch (error) {
       console.error('Erro ao importar dados:', error);
       toast.error('Erro ao importar dados');
     } finally {
       setIsImporting(false);
     }
-  };
+  }, [user]);
 
   /**
    * Função para restaurar um backup
    */
-  const handleRestoreBackup = async () => {
+  const handleRestoreBackup = useCallback(async () => {
     if (!user || !selectedBackup) return;
     
     try {
@@ -102,20 +103,21 @@ const DataExportImport: React.FC = () => {
       
       await dataExportImportService.restoreBackup(backup, user.id);
       
-      toast.success('Backup restaurado!');
+      toast.success('Backup restaurado com sucesso!');
       
-      // Recarregar dados
-      window.location.reload();
+      // Atualizar lista de backups
+      const updatedBackups = dataExportImportService.getBackups();
+      setBackups(updatedBackups);
     } catch (error) {
       console.error('Erro ao restaurar backup:', error);
       toast.error('Erro ao restaurar backup');
     }
-  };
+  }, [user, selectedBackup, backups]);
 
   /**
    * Função para remover um backup
    */
-  const handleRemoveBackup = () => {
+  const handleRemoveBackup = useCallback(() => {
     if (!selectedBackup) return;
     
     try {
@@ -126,19 +128,19 @@ const DataExportImport: React.FC = () => {
       setBackups(updatedBackups);
       setSelectedBackup('');
       
-      toast.success('Backup removido!');
+      toast.success('Backup removido com sucesso!');
     } catch (error) {
       console.error('Erro ao remover backup:', error);
       toast.error('Erro ao remover backup');
     }
-  };
+  }, [selectedBackup, backups]);
 
   /**
    * Função para formatar data
    */
-  const formatDate = (dateString: string) => {
+  const formatDate = useCallback((dateString: string) => {
     return new Date(dateString).toLocaleString('pt-BR');
-  };
+  }, []);
 
   return (
     <div className="space-y-4">
@@ -273,6 +275,6 @@ const DataExportImport: React.FC = () => {
       </div>
     </div>
   );
-};
+});
 
 export default DataExportImport;

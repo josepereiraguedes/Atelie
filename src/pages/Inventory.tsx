@@ -1,18 +1,21 @@
 import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { Plus, Search, Edit, Trash2, Package } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, Package, Download, ShoppingCart, MoreHorizontal } from 'lucide-react';
 import { useLocalDatabase, Product } from '../contexts/LocalDatabaseContext';
 import { handleError } from '../utils/errorHandler';
 import { motion, HTMLMotionProps } from 'framer-motion';
 import toast from 'react-hot-toast';
 import LowStockAlerts from '../components/Inventory/LowStockAlerts';
 import InventorySummary from '../components/Inventory/InventorySummary';
+import { exportProductsToMercadoLivre, exportProductsToShopee } from '../services/marketplaceExport';
 
 const Inventory: React.FC = () => {
   const { products, deleteProduct, lowStockAlerts } = useLocalDatabase();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
   const [selectedSubcategory, setSelectedSubcategory] = useState('');
+  const [selectedProducts, setSelectedProducts] = useState<number[]>([]); // Para seleção de produtos
+  const [isExportMenuOpen, setIsExportMenuOpen] = useState(false); // Para o menu de exportação
 
   const categories = useMemo(() => {
     return [...new Set(products.map(p => p.category))].sort();
@@ -28,8 +31,7 @@ const Inventory: React.FC = () => {
 
   const filteredProducts = useMemo(() => {
     return products.filter(product => {
-      const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           product.supplier.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesCategory = !selectedCategory || product.category === selectedCategory;
       const matchesSubcategory = !selectedSubcategory || product.subcategory === selectedSubcategory;
       return matchesSearch && matchesCategory && matchesSubcategory;
@@ -58,19 +60,155 @@ const Inventory: React.FC = () => {
     setSelectedSubcategory(subcategory || '');
   };
 
+  // Funções de exportação
+  const handleExportToMercadoLivre = () => {
+    const productsToExport = selectedProducts.length > 0 
+      ? products.filter(p => selectedProducts.includes(p.id!))
+      : filteredProducts;
+    
+    if (productsToExport.length === 0) {
+      toast.error('Nenhum produto para exportar');
+      return;
+    }
+    
+    try {
+      exportProductsToMercadoLivre(productsToExport);
+      toast.success(`Exportados ${productsToExport.length} produtos para Mercado Livre!`);
+      setIsExportMenuOpen(false);
+    } catch (error) {
+      handleError(error, 'marketplaceExport');
+      toast.error('Erro ao exportar para Mercado Livre');
+    }
+  };
+
+  const handleExportToShopee = () => {
+    const productsToExport = selectedProducts.length > 0 
+      ? products.filter(p => selectedProducts.includes(p.id!))
+      : filteredProducts;
+    
+    if (productsToExport.length === 0) {
+      toast.error('Nenhum produto para exportar');
+      return;
+    }
+    
+    try {
+      exportProductsToShopee(productsToExport);
+      toast.success(`Exportados ${productsToExport.length} produtos para Shopee!`);
+      setIsExportMenuOpen(false);
+    } catch (error) {
+      handleError(error, 'marketplaceExport');
+      toast.error('Erro ao exportar para Shopee');
+    }
+  };
+
+  // Funções para seleção de produtos
+  const toggleProductSelection = (id: number) => {
+    setSelectedProducts(prev => 
+      prev.includes(id) 
+        ? prev.filter(productId => productId !== id) 
+        : [...prev, id]
+    );
+  };
+
+  const selectAllProducts = () => {
+    if (selectedProducts.length === filteredProducts.length) {
+      // Se todos estão selecionados, desmarcar todos
+      setSelectedProducts([]);
+    } else {
+      // Se nem todos estão selecionados, marcar todos os filtrados
+      setSelectedProducts(filteredProducts.map(p => p.id!));
+    }
+  };
+
+  // Função para exportar todos os produtos
+  const exportAllProducts = (platform: 'mercado_livre' | 'shopee') => {
+    try {
+      if (platform === 'mercado_livre') {
+        exportProductsToMercadoLivre(products);
+        toast.success(`Exportados ${products.length} produtos para Mercado Livre!`);
+      } else {
+        exportProductsToShopee(products);
+        toast.success(`Exportados ${products.length} produtos para Shopee!`);
+      }
+      setIsExportMenuOpen(false);
+    } catch (error) {
+      handleError(error, 'marketplaceExport');
+      toast.error(`Erro ao exportar para ${platform === 'mercado_livre' ? 'Mercado Livre' : 'Shopee'}`);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
           Estoque
         </h1>
-        <Link
-          to="/inventory/new"
-          className="inline-flex items-center px-3 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors"
-        >
-          <Plus className="w-4 h-4 mr-1.5" />
-          Novo Produto
-        </Link>
+        <div className="flex flex-wrap gap-2">
+          {/* Botão de exportação unificado */}
+          <div className="relative">
+            <button
+              onClick={() => setIsExportMenuOpen(!isExportMenuOpen)}
+              className="inline-flex items-center px-3 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition-colors"
+            >
+              <Download className="w-4 h-4 mr-1.5" />
+              Exportar
+              <MoreHorizontal className="w-4 h-4 ml-1" />
+            </button>
+            
+            {/* Menu dropdown de exportação */}
+            {isExportMenuOpen && (
+              <div className="absolute right-0 mt-1 w-56 bg-white dark:bg-gray-800 rounded-md shadow-lg py-1 z-10 border border-gray-200 dark:border-gray-700">
+                <div className="px-4 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  Exportar Selecionados
+                </div>
+                <button
+                  onClick={handleExportToMercadoLivre}
+                  className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center"
+                  disabled={selectedProducts.length === 0 && filteredProducts.length === 0}
+                >
+                  <ShoppingCart className="w-4 h-4 mr-2 text-orange-500" />
+                  Mercado Livre (selecionados)
+                </button>
+                <button
+                  onClick={handleExportToShopee}
+                  className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center"
+                  disabled={selectedProducts.length === 0 && filteredProducts.length === 0}
+                >
+                  <ShoppingCart className="w-4 h-4 mr-2 text-red-500" />
+                  Shopee (selecionados)
+                </button>
+                
+                <div className="border-t border-gray-200 dark:border-gray-700 my-1"></div>
+                
+                <div className="px-4 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  Exportar Todos
+                </div>
+                <button
+                  onClick={() => exportAllProducts('mercado_livre')}
+                  className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center"
+                >
+                  <ShoppingCart className="w-4 h-4 mr-2 text-orange-500" />
+                  Mercado Livre (todos)
+                </button>
+                <button
+                  onClick={() => exportAllProducts('shopee')}
+                  className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center"
+                >
+                  <ShoppingCart className="w-4 h-4 mr-2 text-red-500" />
+                  Shopee (todos)
+                </button>
+              </div>
+            )}
+          </div>
+          
+          <Link
+            to="/inventory/new"
+            className="inline-flex items-center px-3 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            <Plus className="w-4 h-4 mr-1.5" />
+            Novo Produto
+          </Link>
+        </div>
       </div>
 
       {/* Alerta de Estoque Baixo */}
@@ -145,10 +283,23 @@ const Inventory: React.FC = () => {
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm">
         <div className="p-4 border-b border-gray-200 dark:border-gray-700">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-            <h3 className="font-semibold text-gray-900 dark:text-white">
-              Produtos ({filteredProducts.length})
-            </h3>
             <div className="flex items-center space-x-2">
+              <h3 className="font-semibold text-gray-900 dark:text-white">
+                Produtos ({filteredProducts.length})
+              </h3>
+              {selectedProducts.length > 0 && (
+                <span className="text-sm text-blue-600 dark:text-blue-400">
+                  ({selectedProducts.length} selecionados)
+                </span>
+              )}
+            </div>
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={selectAllProducts}
+                className="text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+              >
+                {selectedProducts.length === filteredProducts.length ? 'Desmarcar todos' : 'Marcar todos'}
+              </button>
               <span className="text-sm text-gray-500 dark:text-gray-400">
                 Ordenar por:
               </span>
@@ -178,8 +329,18 @@ const Inventory: React.FC = () => {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.05 }}
-                  {...({ className: "bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden hover:shadow-md transition-shadow w-full max-w-xs mx-auto" } as HTMLMotionProps<'div'>)}
+                  {...({ className: "bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden hover:shadow-md transition-shadow w-full max-w-xs mx-auto relative" } as HTMLMotionProps<'div'>)}
                 >
+                  {/* Checkbox para seleção */}
+                  <div className="absolute top-2 left-2 z-10">
+                    <input
+                      type="checkbox"
+                      checked={selectedProducts.includes(product.id!)}
+                      onChange={() => toggleProductSelection(product.id!)}
+                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    />
+                  </div>
+                  
                   <div className="relative">
                     {product.image ? (
                       <img src={product.image} alt={product.name} className="w-full h-32 object-cover" />
@@ -228,7 +389,7 @@ const Inventory: React.FC = () => {
                       <div className="flex justify-between text-xs">
                         <span className="text-gray-500 dark:text-gray-400">Fornecedor:</span>
                         <span className="font-medium text-gray-900 dark:text-white truncate max-w-[80px]">
-                          {product.supplier || 'N/A'}
+                          N/A
                         </span>
                       </div>
                     </div>
