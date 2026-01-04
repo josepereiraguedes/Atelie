@@ -46,3 +46,10 @@ coverage/
 *.deb
 *.rpm
 *.snap
+
+# Local database and media
+local_database/
+server/
+
+# Backup files
+backup_*/
