@@ -1,4 +1,4 @@
-import { dataExportImportService } from './dataExportImport';
+import { dataExportImportService } from '@/features/settings/services/dataExportImport';
 // Remover a importação de useAuth pois não é necessário neste contexto
 
 // Interface para configurações de backup automático

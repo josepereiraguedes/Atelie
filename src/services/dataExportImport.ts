@@ -1,5 +1,5 @@
-import { Product, Client, Transaction, Category, Supplier } from '../contexts/LocalDatabaseContext';
-import { handleError } from '../utils/errorHandler';
+import { Product, Client, Transaction, Category, Supplier } from '@/core/contexts/LocalDatabaseContext';
+import { handleError } from '@/shared/utils/errorHandler';
 
 // Interface para os dados exportados
 export interface ExportedData {

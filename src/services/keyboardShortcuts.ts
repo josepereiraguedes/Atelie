@@ -1,4 +1,4 @@
-import { handleError } from '../utils/errorHandler';
+import { handleError } from '@/shared/utils/errorHandler';
 
 // Interface para um atalho de teclado
 export interface KeyboardShortcut {
@@ -25,7 +25,7 @@ class KeyboardShortcutsService {
   private shortcuts: KeyboardShortcut[] = [];
   private enabled = true;
 
-  private constructor() {}
+  private constructor() { }
 
   /**
    * Obtém a instância singleton do serviço
@@ -99,7 +99,12 @@ class KeyboardShortcutsService {
    * @returns true se o evento corresponde ao atalho
    */
   private matchesShortcut(event: KeyboardEvent, shortcut: KeyboardShortcut): boolean {
-    // Verificar tecla principal
+    // Verificar se o evento e o atalho têm os dados necessários
+    if (!event || !event.key || !shortcut || !shortcut.key) {
+      return false;
+    }
+
+    // Verificar tecla principal (case-insensitive)
     if (event.key.toLowerCase() !== shortcut.key.toLowerCase()) {
       return false;
     }

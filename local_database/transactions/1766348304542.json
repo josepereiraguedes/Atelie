@@ -1,0 +1,23 @@
+{
+  "type": "sale",
+  "payment_status": "paid",
+  "payment_method": "money: R$310.70",
+  "client_id": 1766348225602,
+  "client": {
+    "name": "José Pereira"
+  },
+  "items": [
+    {
+      "product_id": 1766345047222,
+      "quantity": 1,
+      "unit_price": 310.7,
+      "total": 310.7
+    }
+  ],
+  "total": 310.7,
+  "received_amount": 310.7,
+  "change_amount": 0,
+  "created_at": "2025-12-21T20:18:24.048Z",
+  "id": 1766348304542,
+  "updated_at": "2025-12-21T20:18:24.050Z"
+}

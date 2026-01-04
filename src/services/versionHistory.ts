@@ -1,4 +1,4 @@
-import { Product, Client, Transaction, Category, Supplier } from '../contexts/LocalDatabaseContext';
+import { Product, Client, Transaction, Category, Supplier } from '@/shared/types/database.types';
 
 // Interface para uma versão dos dados
 export interface DataVersion {

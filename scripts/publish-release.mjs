@@ -132,7 +132,7 @@ function publishRelease() {
     createGitHubRelease(version, tag);
 
     console.log('🎉 Processo de publicação concluído com sucesso!');
-    console.log(`🔗 Release disponível em: https://github.com/seu-usuario/sistema-gestao-atelie/releases/tag/${tag}`);
+    console.log(`🔗 Release disponível em: https://github.com/sistema-gestao-estoque/sistema-gestao-estoque/releases/tag/${tag}`);
 
   } catch (error) {
     console.error('❌ Erro durante a publicação:', error.message);

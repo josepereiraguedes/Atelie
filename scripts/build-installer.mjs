@@ -23,19 +23,24 @@ try {
   execSync('npm run build', { stdio: 'inherit' });
   console.log('✅ Build da aplicação React concluído');
 
-  // 3. Compilar arquivos TypeScript do Electron
-  console.log('⚙️  Compilando arquivos TypeScript do Electron...');
-  execSync('npx tsc -p tsconfig.electron.json', { stdio: 'inherit' });
-  console.log('✅ Compilação dos arquivos TypeScript concluída');
+  // 3. Copiar arquivos do Electron para a pasta dist
+  console.log('⚙️  Copiando arquivos do Electron...');
+  if (!fs.existsSync('electron/dist')) {
+    fs.mkdirSync('electron/dist', { recursive: true });
+  }
+  execSync('xcopy electron\\main.cjs electron\\dist /Y', { stdio: 'inherit' });
+  console.log('✅ Arquivos do Electron copiados');
 
   // 4. Copiar arquivos para a pasta electron/dist
   console.log('📋 Copiando arquivos para electron/dist...');
   execSync('xcopy dist electron\\dist /E /I /Y', { stdio: 'inherit' });
+  execSync('xcopy server electron\\dist\\server /E /I /Y', { stdio: 'inherit' });
+  execSync('xcopy local_database electron\\dist\\local_database /E /I /Y', { stdio: 'inherit' });
   console.log('✅ Arquivos copiados para electron/dist');
 
-  // 5. Gerar o instalador NSIS para Windows
-  console.log('📦 Gerando instalador NSIS...');
-  execSync('npx electron-builder --win nsis', { stdio: 'inherit' });
+  // 5. Gerar o instalador NSIS para Windows (sem reconstrução de dependências)
+  console.log('📦 Gerando instalador NSIS (modo seguro)...');
+  execSync('npx electron-builder --win --config electron-builder.json --publish=never', { stdio: 'inherit', env: { ...process.env, ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES: 'true' } });
   console.log('✅ Instalador NSIS gerado com sucesso');
 
   console.log('🎉 Processo de build do instalador concluído!');

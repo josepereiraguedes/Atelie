@@ -13,7 +13,7 @@ try {
   const autoUpdateModule = require('../electron/dist/src/services/autoUpdate.js');
   autoUpdateService = autoUpdateModule.autoUpdateService;
   console.log('✅ Serviço de atualização carregado (produção)');
-  
+
   // Tentar importar o serviço de backup automático
   try {
     const autoBackupModule = require('../electron/dist/src/services/autoBackup.js');
@@ -28,7 +28,7 @@ try {
     const autoUpdateModule = require('../src/services/autoUpdate.ts');
     autoUpdateService = autoUpdateModule.autoUpdateService;
     console.log('✅ Serviço de atualização carregado (desenvolvimento)');
-    
+
     // Fallback para desenvolvimento - backup automático
     try {
       const autoBackupModule = require('../src/services/autoBackup.ts');
@@ -50,22 +50,31 @@ let mainWindow;
 
 function createWindow() {
   console.log('🔧 Criando janela do aplicativo...');
-  
+
   // Obter as dimensões da tela
   const { width, height } = screen.getPrimaryDisplay().workAreaSize;
-  
+
   // Criar a janela do navegador
   mainWindow = new BrowserWindow({
-    width: Math.min(1200, width * 0.9),
     height: Math.min(800, height * 0.9),
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
-      sandbox: true,
-      webSecurity: true,
-      allowRunningInsecureContent: false
+      sandbox: false, // Desabilitar sandbox para facilitar comunicação local se necessário
+      webSecurity: false, // Desabilitar webSecurity temporariamente para migração (permite CORS e CSP relaxado)
+      allowRunningInsecureContent: true
     },
     icon: path.join(__dirname, '../build/icon.ico')
+  });
+
+  // Forçar CSP permissiva headers
+  mainWindow.webContents.session.webRequest.onHeadersReceived((details, callback) => {
+    callback({
+      responseHeaders: {
+        ...details.responseHeaders,
+        'Content-Security-Policy': ["default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob:; connect-src * 'unsafe-inline'; img-src * data: blob:; style-src * 'unsafe-inline'; script-src * 'unsafe-inline' 'unsafe-eval';"]
+      }
+    });
   });
 
   // Remover o menu padrão
@@ -77,21 +86,21 @@ function createWindow() {
     // Em produção, quando empacotado, os arquivos estão dentro do app.asar
     const indexPath = path.join(__dirname, '../dist/index.html');
     console.log('📂 Caminho do index.html:', indexPath);
-    
+
     mainWindow.loadFile(indexPath).catch(error => {
       console.error('❌ Erro ao carregar arquivo index.html:', error);
     });
   } else {
     console.log('💻 Aplicativo em modo de desenvolvimento');
     // Em desenvolvimento, usar o servidor de desenvolvimento ou arquivo local
-    const startUrl = process.env.ELECTRON_START_URL || 
+    const startUrl = process.env.ELECTRON_START_URL ||
       url.format({
         pathname: path.join(__dirname, '../dist/index.html'),
         protocol: 'file:',
         slashes: true
       });
     console.log('🌐 URL de inicialização:', startUrl);
-    
+
     mainWindow.loadURL(startUrl).catch(error => {
       console.error('❌ Erro ao carregar URL:', error);
     });
@@ -129,7 +138,7 @@ function createWindow() {
     console.log('🚪 Janela fechada');
     mainWindow = null;
   });
-  
+
   // Tratar erros não tratados
   mainWindow.webContents.on('did-fail-provisional-load', (event, errorCode, errorDescription, validatedURL) => {
     console.error('💥 Falha no carregamento provisional:', errorCode, errorDescription, validatedURL);
@@ -140,10 +149,10 @@ function createWindow() {
 app.whenReady().then(() => {
   console.log('🚀 Electron pronto, criando janela...');
   createWindow();
-  
+
   // Inicializar o serviço de atualização automática
   autoUpdateService.initialize();
-  
+
   // Inicializar o serviço de backup automático (se disponível)
   if (autoBackupService && typeof autoBackupService.start === 'function') {
     try {

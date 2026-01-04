@@ -7,7 +7,23 @@ files:
   - filter:
       - dist/**/*
       - electron/**/*
+      - server/**/*
+      - local_database/**/*
       - package.json
+      - icon.svg
+      - '!node_modules/.cache/**/*'
+      - '!src/**/*'
+      - '!scripts/**/*'
+      - '!tests/**/*'
+      - '!*.md'
+      - '!INICIAR_SISTEMA.bat'
+extraResources:
+  - filter:
+      - server/**/*
+      - local_database/**/*
+npmRebuild: false
+buildDependenciesFromSource: false
+nodeGypRebuild: false
 win:
   target:
     - nsis
@@ -23,9 +39,5 @@ nsis:
   installerIcon: build/icon.ico
   uninstallerIcon: build/icon.ico
   installerHeaderIcon: build/icon.ico
-publish:
-  provider: github
-  owner: seu-usuario
-  repo: sistema-gestao-atelie
-  releaseType: release
+publish: null
 electronVersion: 38.3.0

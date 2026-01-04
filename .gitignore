@@ -23,7 +23,8 @@ Thumbs.db
 *.backup
 
 # Compiled files
-*.js
+# Compiled files
+# *.js # Commented out to allow config files
 *.map
 !*.min.js
 

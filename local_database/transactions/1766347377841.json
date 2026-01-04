@@ -1,0 +1,19 @@
+{
+  "type": "sale",
+  "payment_status": "paid",
+  "payment_method": "money: R$250.00 + pix: R$125.00 + credit: R$403.70",
+  "items": [
+    {
+      "product_id": 1766345131684,
+      "quantity": 1,
+      "unit_price": 778.7,
+      "total": 778.7
+    }
+  ],
+  "total": 778.7,
+  "received_amount": 778.7,
+  "change_amount": 0,
+  "created_at": "2025-12-21T20:02:57.574Z",
+  "id": 1766347377841,
+  "updated_at": "2025-12-21T20:02:57.588Z"
+}
