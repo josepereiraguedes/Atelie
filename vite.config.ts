@@ -27,6 +27,8 @@ export default defineConfig({
   build: {
     minify: 'esbuild',
     sourcemap: false,
-    chunkSizeWarningLimit: 1000
+    chunkSizeWarningLimit: 1000,
+    outDir: 'dist',
+    emptyOutDir: true
   }
 });
