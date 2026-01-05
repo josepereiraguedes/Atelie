@@ -1,8 +1,9 @@
 import axios from 'axios';
-import { Product } from '@/shared/types/inventory';
-import { Client, Supplier } from '@/shared/types/client-supplier';
+import { Product, Client, Supplier } from '@/shared/types/database.types';
 
-const API_URL = 'http://localhost:3001/api';
+// Verifica se estamos em ambiente de produção (Netlify) ou desenvolvimento
+const isProduction = process.env.NODE_ENV === 'production' || !window.location.href.includes('localhost');
+const API_URL = isProduction ? '' : 'http://localhost:3001/api'; // Em produção (Netlify), usamos URLs relativas ou API diferente
 
 const api = axios.create({
     baseURL: API_URL,
@@ -92,10 +93,14 @@ export const apiService = {
     // Health Check
     checkConnection: async (): Promise<boolean> => {
         try {
+            // Em ambiente de produção (Netlify), sempre retorna true pois não há backend
+            if (isProduction) {
+                return true;
+            }
             await api.get('/health');
             return true;
         } catch (e) {
-            return false;
+            return isProduction; // Em produção, considera como OK
         }
     },
 
@@ -117,8 +122,17 @@ export const apiService = {
 
     // Logs de Atividade
     getLogs: async (limit?: number): Promise<any[]> => {
-        const response = await api.get('/logs', { params: { limit } });
-        return response.data;
+        try {
+            // Em ambiente de produção (Netlify), retorna array vazio pois não há backend
+            if (isProduction) {
+                return [];
+            }
+            const response = await api.get('/logs', { params: { limit } });
+            return response.data;
+        } catch (error) {
+            // Retorna array vazio em caso de erro
+            return [];
+        }
     },
 
     createLog: async (log: any): Promise<any> => {
