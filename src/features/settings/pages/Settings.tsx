@@ -9,6 +9,7 @@ import toast from 'react-hot-toast';
 
 import DataExportImport from '@/shared/components/settings/DataExportImport';
 import { MarketplaceConfigSummary } from '@/features/marketplace/components';
+import { MercadoLivreConfigForm } from '@/features/settings/components/MercadoLivreConfigForm';
 
 const Settings: React.FC = () => {
   const { company, updateCompany, notifications, updateNotifications } = useConfig();
@@ -758,6 +759,36 @@ const Settings: React.FC = () => {
               Comparação de Custos
             </a>
           </div>
+        </motion.div>
+        
+        {/* Configurações do Mercado Livre */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.7 }}
+          {...({ className: "bg-white dark:bg-gray-800 rounded-xl shadow-sm p-5" } as HTMLMotionProps<'div'>)}
+        >
+          <div className="flex items-center mb-4">
+            <div className="p-2 bg-orange-100 dark:bg-orange-900/30 rounded-lg">
+              <ShoppingCart className="w-5 h-5 text-orange-600 dark:text-orange-400" />
+            </div>
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white ml-3">
+              Mercado Livre
+            </h2>
+          </div>
+          
+          <MercadoLivreConfigForm 
+            onSave={(config) => {
+              // Armazenar as configurações no localStorage
+              localStorage.setItem('mercadoLivreConfig', JSON.stringify(config));
+              toast.success('Credenciais do Mercado Livre salvas com sucesso!');
+            }}
+            currentConfig={
+              localStorage.getItem('mercadoLivreConfig') 
+                ? JSON.parse(localStorage.getItem('mercadoLivreConfig') as string) 
+                : undefined
+            }
+          />
         </motion.div>
       </div>
 

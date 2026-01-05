@@ -21,9 +21,13 @@ export class MercadoLivreOAuth {
   private tokens: MercadoLivreToken | null = null;
 
   constructor() {
+    // Tenta obter as credenciais do localStorage primeiro, depois das variáveis de ambiente
+    const savedConfig = localStorage.getItem('mercadoLivreConfig');
+    const mercadoLivreConfig = savedConfig ? JSON.parse(savedConfig) : null;
+    
     this.config = {
-      clientId: import.meta.env.VITE_MERCADO_LIVRE_CLIENT_ID || '',
-      clientSecret: import.meta.env.VITE_MERCADO_LIVRE_CLIENT_SECRET || '',
+      clientId: mercadoLivreConfig?.clientId || import.meta.env.VITE_MERCADO_LIVRE_CLIENT_ID || '',
+      clientSecret: mercadoLivreConfig?.clientSecret || import.meta.env.VITE_MERCADO_LIVRE_CLIENT_SECRET || '',
       redirectUri: window.location.protocol === 'https:' 
         ? `${window.location.origin}/mercado-livre/callback`
         : `https://localhost.redirect/me/mercado-livre/callback` // Placeholder para desenvolvimento local
