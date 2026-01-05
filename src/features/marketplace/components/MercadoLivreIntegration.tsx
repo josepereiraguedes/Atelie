@@ -40,8 +40,13 @@ export const MercadoLivreIntegration: React.FC<MercadoLivreIntegrationProps> = (
   };
 
   const handleConnect = () => {
-    if (!import.meta.env.VITE_MERCADO_LIVRE_CLIENT_ID) {
-      toast.error('Credenciais do Mercado Livre não configuradas. Contate o administrador.');
+    // Verifica se as credenciais estão disponíveis
+    const savedConfig = localStorage.getItem('mercadoLivreConfig');
+    const hasEnvCredentials = !!(import.meta.env.VITE_MERCADO_LIVRE_CLIENT_ID && import.meta.env.VITE_MERCADO_LIVRE_CLIENT_SECRET);
+    const hasLocalCredentials = !!(savedConfig && JSON.parse(savedConfig).clientId && JSON.parse(savedConfig).clientSecret);
+    
+    if (!hasEnvCredentials && !hasLocalCredentials) {
+      toast.error('Credenciais do Mercado Livre não configuradas. Configure-as na página de configurações.');
       return;
     }
     
@@ -296,30 +301,34 @@ export const MercadoLivreIntegration: React.FC<MercadoLivreIntegrationProps> = (
               <li>• <strong>Funcionalidade adicional</strong>: Exportação via CSV ainda disponível como opção</li>
             </ul>
             
-            {(!import.meta.env.VITE_MERCADO_LIVRE_CLIENT_ID || !import.meta.env.VITE_MERCADO_LIVRE_CLIENT_SECRET) && (
-              <div className="mt-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
-                <h5 className="font-bold text-yellow-800 dark:text-yellow-200 mb-2 flex items-center gap-2">
-                  <ShoppingCart className="w-4 h-4" />
-                  Configuração Necessária
-                </h5>
-                <p className="text-sm text-yellow-700 dark:text-yellow-300 mb-2">
-                  Para usar esta funcionalidade, você precisa configurar suas credenciais do Mercado Livre:
-                </p>
-                <ol className="text-sm text-yellow-700 dark:text-yellow-300 list-decimal pl-4 space-y-1">
-                  <li>Acesse: <a href="https://developers.mercadolivre.com.br/" target="_blank" rel="noopener noreferrer" className="underline hover:text-yellow-800">https://developers.mercadolivre.com.br/</a></li>
-                  <li>Crie uma aplicação no Mercado Livre Developers</li>
-                  <li>Copie o Client ID e Client Secret</li>
-                  <li>Cole no arquivo <code className="bg-yellow-100 dark:bg-yellow-800 px-1 rounded">.env</code> do sistema</li>
-                  <li>Para desenvolvimento local, use o ngrok para criar uma URL HTTPS:</li>
-                  <ol className="text-sm text-yellow-700 dark:text-yellow-300 list-decimal pl-8 space-y-1">
-                    <li>Instale o ngrok: <code className="bg-yellow-100 dark:bg-yellow-800 px-1 rounded">npm install -g ngrok</code></li>
-                    <li>Inicie seu sistema: <code className="bg-yellow-100 dark:bg-yellow-800 px-1 rounded">npm run dev</code></li>
-                    <li>Em outro terminal, execute: <code className="bg-yellow-100 dark:bg-yellow-800 px-1 rounded">ngrok http 5210</code></li>
-                    <li>Use a URL HTTPS fornecida pelo ngrok como redirecionamento</li>
-                  </ol>
-                </ol>
-              </div>
-            )}
+            {
+              (() => {
+                const savedConfig = localStorage.getItem('mercadoLivreConfig');
+                const hasEnvCredentials = !!(import.meta.env.VITE_MERCADO_LIVRE_CLIENT_ID && import.meta.env.VITE_MERCADO_LIVRE_CLIENT_SECRET);
+                const hasLocalCredentials = !!(savedConfig && JSON.parse(savedConfig || '{}').clientId && JSON.parse(savedConfig || '{}').clientSecret);
+                
+                if (!hasEnvCredentials && !hasLocalCredentials) {
+                  return (
+                    <div className="mt-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+                      <h5 className="font-bold text-yellow-800 dark:text-yellow-200 mb-2 flex items-center gap-2">
+                        <ShoppingCart className="w-4 h-4" />
+                        Configuração Necessária
+                      </h5>
+                      <p className="text-sm text-yellow-700 dark:text-yellow-300 mb-2">
+                        Para usar esta funcionalidade, você precisa configurar suas credenciais do Mercado Livre:
+                      </p>
+                      <ol className="text-sm text-yellow-700 dark:text-yellow-300 list-decimal pl-4 space-y-1">
+                        <li>Acesse: <a href="https://developers.mercadolivre.com.br/" target="_blank" rel="noopener noreferrer" className="underline hover:text-yellow-800">https://developers.mercadolivre.com.br/</a></li>
+                        <li>Crie uma aplicação no Mercado Livre Developers</li>
+                        <li>Copie o Client ID e Client Secret</li>
+                        <li>Configure na página de configurações do sistema</li>
+                      </ol>
+                    </div>
+                  );
+                }
+                return null;
+              })()
+            }
           </div>
         </div>
 
