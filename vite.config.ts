@@ -6,7 +6,12 @@ import basicSsl from '@vitejs/plugin-basic-ssl';
 
 // Configuração para servir arquivos estáticos da pasta public e fixar a porta
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react(),
+  ],
+  define: {
+    global: 'globalThis',
+  },
   server: {
 
     host: true,

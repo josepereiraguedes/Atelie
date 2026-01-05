@@ -9,7 +9,7 @@
   "scripts": {
     "dev": "concurrently \"npm run server\" \"vite\"",
     "server": "node server/index.cjs",
-    "build": "npm run clean && vite build",
+    "build": "rimraf dist && cross-env NODE_ENV=production vite build",
     "clean": "rimraf dist",
     "lint": "eslint .",
     "preview": "vite preview",
@@ -45,8 +45,8 @@
     "lucide-react": "^0.511.0",
     "pdfjs-dist": "^3.11.174",
     "puppeteer": "^24.30.0",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
     "react-hook-form": "^7.48.2",
     "react-hot-toast": "^2.4.1",
     "react-router-dom": "^6.21.0"
@@ -64,6 +64,7 @@
     "app-builder-bin": "^3.7.1",
     "autoprefixer": "^10.4.21",
     "concurrently": "^9.2.1",
+    "cross-env": "^7.0.3",
     "dotenv": "^16.6.1",
     "electron": "^38.3.0",
     "electron-builder": "^26.0.12",
@@ -82,7 +83,7 @@
     "tsx": "^4.20.5",
     "typescript": "^5.9.2",
     "typescript-eslint": "^8.32.1",
-    "vite": "^6.3.5",
+    "vite": "^5.4.10",
     "vite-plugin-mkcert": "^1.17.9",
     "vitest": "^4.0.7",
     "wait-on": "^9.0.1"
