@@ -28,9 +28,7 @@ export class MercadoLivreOAuth {
     this.config = {
       clientId: mercadoLivreConfig?.clientId || import.meta.env.VITE_MERCADO_LIVRE_CLIENT_ID || '',
       clientSecret: mercadoLivreConfig?.clientSecret || import.meta.env.VITE_MERCADO_LIVRE_CLIENT_SECRET || '',
-      redirectUri: window.location.protocol === 'https:' 
-        ? `${window.location.origin}/mercado-livre/callback`
-        : `https://localhost.redirect/me/mercado-livre/callback` // Placeholder para desenvolvimento local
+      redirectUri: `${window.location.origin}/mercado-livre/callback` // Usar a mesma URL para todos os ambientes, ajustando protocolo conforme necessário
     };
   }
 

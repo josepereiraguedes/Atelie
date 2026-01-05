@@ -82,6 +82,7 @@ export const MercadoLivreConfigForm: React.FC<MercadoLivreConfigFormProps> = ({
           <li>Crie uma nova aplicação</li>
           <li>Copie o Client ID e Client Secret fornecidos</li>
           <li>Configure a URL de redirecionamento como: {window.location.origin}/mercado-livre/callback</li>
+          <li>Importante: A URL de redirecionamento deve usar HTTPS, mesmo em ambiente local</li>
         </ol>
       </div>
     </div>
