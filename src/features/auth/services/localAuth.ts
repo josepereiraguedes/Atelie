@@ -237,7 +237,7 @@ class LocalAuthService {
   async updateUserProfile(userId: string, updates: Partial<LocalUser>): Promise<LocalUser | null> {
     try {
       // Obter usuários do localStorage
-      let users = this.getFromLocalStorage<LocalUser[]>('local_users', []);
+      const users = this.getFromLocalStorage<LocalUser[]>('local_users', []);
 
       // Encontrar o usuário
       const userIndex = users.findIndex(u => u.id === userId);

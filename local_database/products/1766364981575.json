@@ -23,7 +23,7 @@
   ],
   "cost": 55,
   "sale_price": 71.5,
-  "quantity": 10,
+  "quantity": 9,
   "min_stock": 5,
   "unit": "un",
   "marketplace_link": "https://www.mercadolivre.com.br/camisa-basica-masculina-algodao-slim-fit-blusa-premium-lisa/up/MLBU1404382920#polycard_client=search-nordic&search_layout=grid&position=4&type=product&tracking_id=e0b19455-fae8-4e7d-a6dd-8071d2832825&wid=MLB6034824974&sid=search",
@@ -105,7 +105,7 @@
   ],
   "id": 1766364981575,
   "created_at": "2025-12-22T00:56:20.633Z",
-  "updated_at": "2025-12-31T03:21:02.520Z",
+  "updated_at": "2026-01-08T00:04:30.346Z",
   "subcategory": "",
   "supplier": "Mercado Livre"
 }

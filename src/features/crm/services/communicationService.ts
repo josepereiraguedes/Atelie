@@ -21,7 +21,12 @@ export const communicationService = {
         const formattedPhone = this.formatPhone(phone);
 
         // Geramos o card visual premium com o nome dinâmico
-        const cardBlob = await this.generateProductOfferCard(data, companyName);
+        // FIX: Se estivermos enviando um catálogo (data.products), NÃO geramos o card de produto único
+        // Isso evita que o clipboard seja sobrescrito com uma imagem quebrada/incorreta
+        let cardBlob = null;
+        if (data.image && !data.products) {
+            cardBlob = await this.generateProductOfferCard(data, companyName);
+        }
 
         if (cardBlob && navigator.clipboard && window.ClipboardItem) {
             try {
@@ -177,8 +182,8 @@ __________
                 let line = '';
                 let titleY = y + (img.height * scale) + 100;
                 for (let n = 0; n < words.length; n++) {
-                    let testLine = line + words[n] + ' ';
-                    let metrics = ctx.measureText(testLine);
+                    const testLine = line + words[n] + ' ';
+                    const metrics = ctx.measureText(testLine);
                     if (metrics.width > 900 && n > 0) {
                         ctx.fillText(line.trim(), canvas.width / 2, titleY);
                         line = words[n] + ' ';
@@ -232,16 +237,16 @@ __________
                 let lineCount = 0;
                 const maxLines = 5;
 
-                for (let descLine of descLines) {
+                for (const descLine of descLines) {
                     if (lineCount >= maxLines) break;
                     if (!descLine.trim()) continue;
 
-                    let wds = descLine.trim().split(' ');
+                    const wds = descLine.trim().split(' ');
                     let l = '';
                     for (let n = 0; n < wds.length; n++) {
                         if (lineCount >= maxLines) break;
-                        let testL = l + wds[n] + ' ';
-                        let metrics = ctx.measureText(testL);
+                        const testL = l + wds[n] + ' ';
+                        const metrics = ctx.measureText(testL);
                         if (metrics.width > 880 && n > 0) {
                             ctx.fillText(l.trim(), 100, currentY);
                             l = wds[n] + ' ';

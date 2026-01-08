@@ -2,7 +2,7 @@ import React, { useState, useRef, memo, useCallback, useEffect } from 'react';
 import { useAuth } from '@/core/contexts/AuthContext';
 import { useLocalDatabase } from '@/core/contexts/LocalDatabaseContext';
 import { dataExportImportService, BackupData } from '@/features/settings/services/dataExportImport';
-import { autoBackupService, AutoBackupConfig } from '@/services/autoBackup';
+import { autoBackupService, AutoBackupConfig } from '@/features/settings/services/autoBackup';
 import VersionHistoryManager from './VersionHistoryManager';
 import toast from 'react-hot-toast';
 import { Download, Info, Settings, Clock } from 'lucide-react';
@@ -28,7 +28,7 @@ const DataExportImport: React.FC = memo(() => {
   useEffect(() => {
     const loadedBackups = dataExportImportService.getBackups();
     setBackups(loadedBackups);
-    
+
     // Carregar configurações de backup automático
     const config = autoBackupService.getConfig();
     setBackupConfig(config);
@@ -39,12 +39,12 @@ const DataExportImport: React.FC = memo(() => {
    */
   const handleExport = useCallback(async () => {
     if (!user) return;
-    
+
     setIsExporting(true);
     try {
       const userName = user?.name || user?.email || 'Usuário';
       const blob = await dataExportImportService.exportData(user.id, userName);
-      
+
       // Criar link para download
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -52,11 +52,11 @@ const DataExportImport: React.FC = memo(() => {
       a.download = `gestao-dados-${new Date().toISOString().split('T')[0]}.json`;
       document.body.appendChild(a);
       a.click();
-      
+
       // Limpar
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
-      
+
       toast.success('Dados exportados com sucesso!');
     } catch (error) {
       console.error('Erro ao exportar dados:', error);
@@ -71,26 +71,26 @@ const DataExportImport: React.FC = memo(() => {
    */
   const handleImport = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
     if (!user || !event.target.files || event.target.files.length === 0) return;
-    
+
     setIsImporting(true);
     try {
       const file = event.target.files[0];
-      
+
       // Verificar se é um arquivo JSON
       if (file.type !== 'application/json') {
         toast.error('Selecione um arquivo JSON válido');
         return;
       }
-      
+
       await dataExportImportService.importData(file, user.id);
-      
+
       toast.success('Dados importados com sucesso!');
-      
+
       // Limpar o input
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
-      
+
       // Atualizar lista de backups
       const updatedBackups = dataExportImportService.getBackups();
       setBackups(updatedBackups);
@@ -107,18 +107,18 @@ const DataExportImport: React.FC = memo(() => {
    */
   const handleRestoreBackup = useCallback(async () => {
     if (!user || !selectedBackup) return;
-    
+
     try {
       const backup = backups.find(b => b.metadata.backupDate === selectedBackup);
       if (!backup) {
         toast.error('Backup não encontrado');
         return;
       }
-      
+
       await dataExportImportService.restoreBackup(backup, user.id);
-      
+
       toast.success('Backup restaurado com sucesso!');
-      
+
       // Atualizar lista de backups
       const updatedBackups = dataExportImportService.getBackups();
       setBackups(updatedBackups);
@@ -133,15 +133,15 @@ const DataExportImport: React.FC = memo(() => {
    */
   const handleRemoveBackup = useCallback(() => {
     if (!selectedBackup) return;
-    
+
     try {
       dataExportImportService.removeBackup(selectedBackup);
-      
+
       // Atualizar lista de backups
       const updatedBackups = backups.filter(b => b.metadata.backupDate !== selectedBackup);
       setBackups(updatedBackups);
       setSelectedBackup('');
-      
+
       toast.success('Backup removido com sucesso!');
     } catch (error) {
       console.error('Erro ao remover backup:', error);
@@ -160,7 +160,7 @@ const DataExportImport: React.FC = memo(() => {
   const handleBackupConfigChange = (config: Partial<AutoBackupConfig>) => {
     const newConfig = { ...backupConfig, ...config };
     setBackupConfig(newConfig);
-    
+
     // Atualizar no serviço
     if (config.enabled !== undefined) {
       autoBackupService.setEnabled(config.enabled);
@@ -175,11 +175,11 @@ const DataExportImport: React.FC = memo(() => {
 
   const handleManualBackup = async () => {
     if (!user) return;
-    
+
     try {
       await autoBackupService.performBackup();
       toast.success('Backup manual criado com sucesso!');
-      
+
       // Atualizar lista de backups
       const updatedBackups = dataExportImportService.getBackups();
       setBackups(updatedBackups);
@@ -202,7 +202,7 @@ const DataExportImport: React.FC = memo(() => {
               {products.length + clients.length + transactions.length + categories.length + suppliers.length}
             </div>
           </div>
-          
+
           <button
             onClick={handleExport}
             disabled={isExporting}
@@ -218,13 +218,13 @@ const DataExportImport: React.FC = memo(() => {
             )}
           </button>
         </div>
-        
+
         {/* Seção de Importação */}
         <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-3">
           <h4 className="font-medium text-gray-900 dark:text-white text-sm mb-2">
             Importar
           </h4>
-          
+
           <div className="mb-2">
             <input
               type="file"
@@ -237,11 +237,10 @@ const DataExportImport: React.FC = memo(() => {
             />
             <label
               htmlFor="import-file"
-              className={`w-full flex flex-col items-center justify-center border border-dashed rounded-md p-2 cursor-pointer transition duration-150 ease-in-out ${
-                isImporting 
-                  ? 'border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700' 
+              className={`w-full flex flex-col items-center justify-center border border-dashed rounded-md p-2 cursor-pointer transition duration-150 ease-in-out ${isImporting
+                  ? 'border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700'
                   : 'border-gray-300 dark:border-gray-600 hover:border-indigo-400 dark:hover:border-indigo-400'
-              }`}
+                }`}
             >
               {isImporting ? (
                 <div className="flex flex-col items-center">
@@ -260,21 +259,21 @@ const DataExportImport: React.FC = memo(() => {
           </div>
         </div>
       </div>
-      
+
       {/* Seção de Backup Automático */}
       <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-3">
         <div className="flex items-center justify-between mb-2">
           <h4 className="font-medium text-gray-900 dark:text-white text-sm">
             Backup Automático
           </h4>
-          <button 
+          <button
             onClick={() => setShowBackupSettings(!showBackupSettings)}
             className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
           >
             <Settings className="w-4 h-4" />
           </button>
         </div>
-        
+
         <div className="flex gap-2 mb-2">
           <button
             onClick={handleManualBackup}
@@ -283,7 +282,7 @@ const DataExportImport: React.FC = memo(() => {
             Backup Manual
           </button>
         </div>
-        
+
         {showBackupSettings && (
           <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
             <div className="space-y-3">
@@ -299,7 +298,7 @@ const DataExportImport: React.FC = memo(() => {
                   <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
                 </label>
               </div>
-              
+
               <div>
                 <label className="block text-xs text-gray-700 dark:text-gray-300 mb-1">
                   Intervalo
@@ -315,7 +314,7 @@ const DataExportImport: React.FC = memo(() => {
                   <option value="monthly">Mensal</option>
                 </select>
               </div>
-              
+
               <div>
                 <label className="block text-xs text-gray-700 dark:text-gray-300 mb-1">
                   Retenção (número de backups)
@@ -342,7 +341,7 @@ const DataExportImport: React.FC = memo(() => {
                   disabled={!backupConfig.enabled}
                 />
               </div>
-              
+
               {backupConfig.lastBackup && (
                 <div className="text-xs text-gray-600 dark:text-gray-400">
                   Último backup: {formatDate(backupConfig.lastBackup)}
@@ -352,42 +351,42 @@ const DataExportImport: React.FC = memo(() => {
           </div>
         )}
       </div>
-      
+
       {/* Seção de Histórico de Versões */}
       <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-3">
         <div className="flex items-center justify-between mb-2">
           <h4 className="font-medium text-gray-900 dark:text-white text-sm">
             Histórico de Versões
           </h4>
-          <button 
+          <button
             onClick={() => setShowVersionHistory(!showVersionHistory)}
             className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
           >
             <Clock className="w-4 h-4" />
           </button>
         </div>
-        
+
         <button
           onClick={() => setShowVersionHistory(true)}
           className="w-full bg-purple-600 hover:bg-purple-700 text-white text-xs font-medium py-1.5 px-3 rounded-md transition duration-150 ease-in-out"
         >
           Gerenciar Versões
         </button>
-        
+
         {showVersionHistory && (
           <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
             <VersionHistoryManager />
           </div>
         )}
       </div>
-      
+
       {/* Seção de Backups */}
       {backups.length > 0 && (
         <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-3">
           <h4 className="font-medium text-gray-900 dark:text-white text-sm mb-2">
             Backups ({backups.length})
           </h4>
-          
+
           <div className="space-y-2">
             <select
               value={selectedBackup}
@@ -396,15 +395,15 @@ const DataExportImport: React.FC = memo(() => {
             >
               <option value="">Selecione backup</option>
               {backups.map((backup) => (
-                <option 
-                  key={backup.metadata.backupDate} 
+                <option
+                  key={backup.metadata.backupDate}
                   value={backup.metadata.backupDate}
                 >
                   {formatDate(backup.metadata.backupDate)}
                 </option>
               ))}
             </select>
-            
+
             <div className="flex gap-2">
               <button
                 onClick={handleRestoreBackup}
@@ -413,7 +412,7 @@ const DataExportImport: React.FC = memo(() => {
               >
                 Restaurar
               </button>
-              
+
               <button
                 onClick={handleRemoveBackup}
                 disabled={!selectedBackup}
@@ -425,7 +424,7 @@ const DataExportImport: React.FC = memo(() => {
           </div>
         </div>
       )}
-      
+
       {/* Informações de uso */}
       <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
         <div className="flex items-start">

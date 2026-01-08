@@ -20,16 +20,21 @@ export const communicationService = {
     async openWhatsApp(phone: string, message: string, data: any, skipText: boolean = false, companyName: string = 'Nome da Empresa'): Promise<void> {
         const formattedPhone = this.formatPhone(phone);
 
-        // Geramos o card visual premium com o nome dinâmico
-        const cardBlob = await this.generateProductOfferCard(data, companyName);
+        // Check if we have valid product data to generate a card
+        // If it's a catalog (data has 'products' array) or missing image, skip card generation
+        // to preserve what's already in clipboard (the catalog image)
+        if (data.image && !data.products) {
+            // Geramos o card visual premium com o nome dinâmico
+            const cardBlob = await this.generateProductOfferCard(data, companyName);
 
-        if (cardBlob && navigator.clipboard && window.ClipboardItem) {
-            try {
-                await navigator.clipboard.write([
-                    new ClipboardItem({ [cardBlob.type]: cardBlob })
-                ]);
-            } catch (e) {
-                console.warn('Erro ao copiar card para o clipboard:', e);
+            if (cardBlob && navigator.clipboard && window.ClipboardItem) {
+                try {
+                    await navigator.clipboard.write([
+                        new ClipboardItem({ [cardBlob.type]: cardBlob })
+                    ]);
+                } catch (e) {
+                    console.warn('Erro ao copiar card para o clipboard:', e);
+                }
             }
         }
 
@@ -152,8 +157,8 @@ export const communicationService = {
                 let line = '';
                 let titleY = y + (img.height * scale) + 100;
                 for (let n = 0; n < words.length; n++) {
-                    let testLine = line + words[n] + ' ';
-                    let metrics = ctx.measureText(testLine);
+                    const testLine = line + words[n] + ' ';
+                    const metrics = ctx.measureText(testLine);
                     if (metrics.width > 900 && n > 0) {
                         ctx.fillText(line.trim(), canvas.width / 2, titleY);
                         line = words[n] + ' ';
@@ -207,16 +212,16 @@ export const communicationService = {
                 let lineCount = 0;
                 const maxLines = 5;
 
-                for (let descLine of descLines) {
+                for (const descLine of descLines) {
                     if (lineCount >= maxLines) break;
                     if (!descLine.trim()) continue;
 
-                    let wds = descLine.trim().split(' ');
+                    const wds = descLine.trim().split(' ');
                     let l = '';
                     for (let n = 0; n < wds.length; n++) {
                         if (lineCount >= maxLines) break;
-                        let testL = l + wds[n] + ' ';
-                        let metrics = ctx.measureText(testL);
+                        const testL = l + wds[n] + ' ';
+                        const metrics = ctx.measureText(testL);
                         if (metrics.width > 880 && n > 0) {
                             ctx.fillText(l.trim(), 100, currentY);
                             l = wds[n] + ' ';

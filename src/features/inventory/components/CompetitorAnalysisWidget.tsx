@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Search, AlertCircle, Loader2, ExternalLink, Eye, Download, Image as ImageIcon, X } from 'lucide-react';
-import { marketSpy } from '@/services/marketSpy';
+import { marketSpy } from '@/features/marketplace/services/marketSpy';
 
 interface CompetitorAnalysisWidgetProps {
     productName: string;

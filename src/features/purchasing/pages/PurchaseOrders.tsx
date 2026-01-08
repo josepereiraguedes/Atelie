@@ -73,7 +73,7 @@ const PurchaseOrders: React.FC = () => {
             receipt_date: new Date().toISOString().split('T')[0],
             notes: `Recebimento automático do pedido #${order.order_number || orderId}`,
             total: order.total,
-            status: 'pending' as 'pending',
+            status: 'pending' as const,
             // Adicionar informações do pedido de compra para exibição
             purchase_order: {
               id: orderId,

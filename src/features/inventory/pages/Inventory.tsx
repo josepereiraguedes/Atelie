@@ -11,7 +11,7 @@ import { inventoryIntelligence } from "@/services/inventoryIntelligence";
 import { catalogService } from "@/features/catalog/services/catalogService";
 import { communicationService } from "@/services/communicationService";
 import { catalogHistoryService } from "@/services/catalogHistory";
-import { exportProductsToMercadoLivre, exportProductsToShopee } from "@/services/marketplaceExport";
+import { exportProductsToMercadoLivre, exportProductsToShopee } from "@/features/marketplace/services/marketplaceExport";
 import { Product } from "@/shared/types/database.types";
 import { useConfig } from "@/core/contexts/ConfigContext";
 import { WatermarkConfig, CatalogTheme } from "@/shared/types/database.types";
@@ -22,7 +22,7 @@ import { MercadoLivreIntegration } from "@/features/marketplace/components/Merca
 
 const Inventory: React.FC = () => {
   const { products, deleteProduct, addProduct, updateProduct, lowStockAlerts, isLoading, bulkUpdateProducts, transactions } = useLocalDatabase();
-    const { company } = useConfig();
+  const { company } = useConfig();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
   const [selectedSubcategory, setSelectedSubcategory] = useState('');
@@ -35,7 +35,7 @@ const Inventory: React.FC = () => {
   const [spyProductData, setSpyProductData] = useState<{ name: string, price: number } | null>(null);
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
   const [selectedTheme, setSelectedTheme] = useState<CatalogTheme>('vibrant');
-  
+
   // Estado para a integração com o Mercado Livre
   const [isMercadoLivreIntegrationOpen, setIsMercadoLivreIntegrationOpen] = useState(false);
 
@@ -164,9 +164,17 @@ const Inventory: React.FC = () => {
         watermark
       });
 
-      // Copiar para área de transferência
+      // Copiar para área de transferência com feedback
       if (result.blob && navigator.clipboard && window.ClipboardItem) {
-        await navigator.clipboard.write([new ClipboardItem({ [result.blob.type]: result.blob })]);
+        try {
+          await navigator.clipboard.write([new ClipboardItem({ [result.blob.type]: result.blob })]);
+          toast.success('Imagem do catálogo copiada!');
+          // Pequeno delay para garantir que o sistema operacional processe a cópia antes de mudar de janela
+          await new Promise(resolve => setTimeout(resolve, 500));
+        } catch (err) {
+          console.error('Erro ao copiar catálogo:', err);
+          toast.error('Erro ao copiar imagem. Tente novamente.');
+        }
       }
 
       // Gerar mensagem de texto
@@ -401,9 +409,9 @@ const Inventory: React.FC = () => {
         </div>
       </div>
 
-      {lowStockAlerts.length > 0 && <LowStockAlerts products={lowStockAlerts.slice(0, 3).map(p => ({...p, min_stock: p.min_stock || 0}))} />}
+      {lowStockAlerts.length > 0 && <LowStockAlerts products={lowStockAlerts.slice(0, 3).map(p => ({ ...p, min_stock: p.min_stock || 0 }))} />}
       <InventorySummary />
-      
+
       {/* Modal de Integração com o Mercado Livre */}
       {isMercadoLivreIntegrationOpen && (
         <MercadoLivreIntegration
@@ -412,7 +420,7 @@ const Inventory: React.FC = () => {
           onClose={() => setIsMercadoLivreIntegrationOpen(false)}
         />
       )}
-      
+
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4">
         <h3 className="font-semibold text-gray-900 dark:text-white mb-4">Filtros</h3>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">

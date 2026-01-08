@@ -122,7 +122,7 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({ isEditing = fa
     clearErrors();
     
     // Validar itens da transação
-    let hasErrors = false;
+    const hasErrors = false;
     
     // Verificar se todos os itens têm produto selecionado
     const hasInvalidItem = items.some(item => item.product_id === 0);
