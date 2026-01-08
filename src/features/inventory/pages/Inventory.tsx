@@ -1,15 +1,12 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { motion, HTMLMotionProps } from "framer-motion";
 import { useLocalDatabase } from "@/core/contexts/LocalDatabaseContext";
-import { ProductCardSkeleton } from "@/shared/components";
 import { CatalogPreviewModal } from "@/features/catalog/components/CatalogPreviewModal";
-import { Link } from "react-router-dom";
-import { Search, Plus, FileText, Download, MoreHorizontal, ShoppingCart, Brain, X, Package, Trash2, Edit } from "lucide-react";
+import { Search, Brain, X, ShoppingCart, Package, Trash2 } from "lucide-react";
 import toast from "react-hot-toast";
 import { handleError } from "@/shared/utils/errorHandler";
 import { inventoryIntelligence } from "@/services/inventoryIntelligence";
 import { catalogService } from "@/features/catalog/services/catalogService";
-import { communicationService } from "@/services/communicationService";
+import { communicationService } from "@/features/crm/services/communicationService";
 import { catalogHistoryService } from "@/services/catalogHistory";
 import { exportProductsToMercadoLivre, exportProductsToShopee } from "@/features/marketplace/services/marketplaceExport";
 import { Product } from "@/shared/types/database.types";
@@ -19,6 +16,8 @@ import { CompetitorAnalysisWidget } from "@/features/inventory/components/Compet
 import LowStockAlerts from "@/features/dashboard/components/LowStockAlerts";
 import InventorySummary from "@/features/inventory/components/InventorySummary";
 import { MercadoLivreIntegration } from "@/features/marketplace/components/MercadoLivreIntegration";
+import { InventoryHeader } from "@/features/inventory/components/InventoryHeader";
+import { ProductListMemo } from "@/features/inventory/components/ProductList";
 
 const Inventory: React.FC = () => {
   const { products, deleteProduct, addProduct, updateProduct, lowStockAlerts, isLoading, bulkUpdateProducts, transactions } = useLocalDatabase();
@@ -115,9 +114,7 @@ const Inventory: React.FC = () => {
     }
   };
 
-  const isLowStock = (product: Product) => {
-    return Number(product.quantity) <= Number(product.min_stock);
-  };
+
 
   const exportAllProducts = (platform: 'mercado_livre' | 'shopee') => {
     try {
@@ -352,62 +349,17 @@ const Inventory: React.FC = () => {
         </div>
       )}
 
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Estoque</h1>
-        <div className="flex flex-wrap gap-2">
-          <button
-            onClick={() => setIsSpyModalOpen(true)}
-            className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-sm font-bold rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
-          >
-            <Brain className="w-4 h-4 mr-2" />
-            Importar do ML
-          </button>
-
-          <div className="relative">
-            <button
-              onClick={() => setIsExportMenuOpen(!isExportMenuOpen)}
-              className="inline-flex items-center px-3 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition-colors"
-            >
-              <Download className="w-4 h-4 mr-1.5" />
-              Exportar
-              <MoreHorizontal className="w-4 h-4 ml-1" />
-            </button>
-            {isExportMenuOpen && (
-              <div className="absolute right-0 mt-1 w-64 bg-white dark:bg-gray-800 rounded-lg shadow-xl py-2 z-20 border border-gray-200 dark:border-gray-700 animate-in fade-in zoom-in-95 duration-100">
-                <div className="px-4 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">Selecionados ({selectedProducts.length})</div>
-                <button
-                  onClick={() => setIsMercadoLivreIntegrationOpen(true)}
-                  disabled={selectedProducts.length === 0}
-                  className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <ShoppingCart className="w-4 h-4 mr-2 text-yellow-500" /> Mercado Livre (API)
-                </button>
-                <button
-                  onClick={() => exportProductsToShopee(products.filter(p => selectedProducts.includes(p.id!)))}
-                  disabled={selectedProducts.length === 0}
-                  className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <ShoppingCart className="w-4 h-4 mr-2 text-red-500" /> Shopee
-                </button>
-                <div className="border-t border-gray-100 my-1"></div>
-                <div className="px-4 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">Todos ({products.length})</div>
-                <button onClick={() => exportAllProducts('mercado_livre')} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center"><ShoppingCart className="w-4 h-4 mr-2 text-yellow-500" /> Mercado Livre (CSV)</button>
-                <button onClick={() => { setIsMercadoLivreIntegrationOpen(true); }} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center"><ShoppingCart className="w-4 h-4 mr-2 text-yellow-500" /> Mercado Livre (API)</button>
-                <button onClick={() => exportAllProducts('shopee')} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center"><ShoppingCart className="w-4 h-4 mr-2 text-red-500" /> Shopee (Todos)</button>
-              </div>
-            )}
-          </div>
-          <Link to="/import-nfe" className="inline-flex items-center px-3 py-2 bg-emerald-600 text-white text-sm rounded-lg hover:bg-emerald-700 transition-colors">
-            <FileText className="w-4 h-4 mr-1.5" /> Importar NFe
-          </Link>
-          <Link to="/import-pdf" className="inline-flex items-center px-3 py-2 bg-purple-600 text-white text-sm rounded-lg hover:bg-purple-700 transition-colors">
-            <FileText className="w-4 h-4 mr-1.5" /> Importar Catálogo
-          </Link>
-          <Link to="/inventory/new" className="inline-flex items-center px-3 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors ml-2">
-            <Plus className="w-4 h-4 mr-1.5" /> Novo Produto
-          </Link>
-        </div>
-      </div>
+      <InventoryHeader
+        onOpenSpyModal={() => setIsSpyModalOpen(true)}
+        isExportMenuOpen={isExportMenuOpen}
+        setIsExportMenuOpen={setIsExportMenuOpen}
+        selectedCount={selectedProducts.length}
+        totalCount={products.length}
+        onOpenMLIntegration={() => setIsMercadoLivreIntegrationOpen(true)}
+        onExportShopee={(selectedOnly) => exportProductsToShopee(selectedOnly ? products.filter(p => selectedProducts.includes(p.id!)) : products)}
+        onExportMLCSV={() => exportAllProducts('mercado_livre')}
+        onExportShopeeAll={() => exportAllProducts('shopee')}
+      />
 
       {lowStockAlerts.length > 0 && <LowStockAlerts products={lowStockAlerts.slice(0, 3).map(p => ({ ...p, min_stock: p.min_stock || 0 }))} />}
       <InventorySummary />
@@ -539,105 +491,18 @@ const Inventory: React.FC = () => {
           </div>
         </div>
         <div className="p-4">
-          {isLoading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              {[...Array(8)].map((_, i) => (
-                <ProductCardSkeleton key={i} />
-              ))}
-            </div>
-          ) : filteredProducts.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              {filteredProducts.map((product, index) => (
-                <motion.div
-                  key={product.id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.05 }}
-                  {...({ className: "bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden hover:shadow-md transition-shadow relative group" } as HTMLMotionProps<'div'>)}
-                >
-                  <div className="relative">
-                    <div className="absolute top-2 left-2 z-10 w-full flex justify-between px-2">
-                      <input
-                        type="checkbox"
-                        checked={selectedProducts.includes(product.id!)}
-                        onChange={() => toggleProductSelection(product.id!)}
-                        className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 border-gray-300 shadow-sm cursor-pointer"
-                      />
-                      {isLowStock(product) && <div className="bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm">Baixo Estoque</div>}
-                    </div>
-
-                    <div className="w-full h-40 bg-white p-4 flex items-center justify-center">
-                      {product.image ? (
-                        <img src={product.image} alt={product.name} className="max-w-full max-h-full object-contain" />
-                      ) : (
-                        <Package className="w-12 h-12 text-gray-300" />
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="p-3 border-t border-gray-100 dark:border-gray-700">
-                    <div className="mb-2">
-                      <h3 className="font-medium text-gray-900 dark:text-white truncate text-sm" title={product.name}>{product.name}</h3>
-                      <p className="text-[10px] text-gray-400 font-mono truncate">{product.sku || 'Sem SKU'}</p>
-                    </div>
-
-                    <div className="flex items-end justify-between text-xs mb-3">
-                      <div>
-                        <span className="text-gray-500 block mb-0.5">Estoque</span>
-                        <div className="flex items-center bg-gray-100 dark:bg-gray-700 rounded-md">
-                          <button onClick={() => handleQuickStockUpdate(product, -1)} className="p-1 hover:text-red-500 transition-colors disabled:opacity-30" disabled={(product.quantity || 0) <= 0}>-</button>
-                          <span className={`font-bold w-6 text-center ${(product.quantity || 0) <= (product.min_stock || 0) ? 'text-red-500' : 'text-gray-900 dark:text-white'}`}>{product.quantity || 0}</span>
-                          <button onClick={() => handleQuickStockUpdate(product, 1)} className="p-1 hover:text-green-500 transition-colors">+</button>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <span className="text-gray-500 block mb-0.5">Venda</span>
-                        <span className="font-bold text-green-600 text-sm">R$ {Number(product.sale_price).toFixed(2)}</span>
-                      </div>
-                    </div>
-
-                    <div className="flex justify-between gap-1 pt-2 border-t border-gray-100 dark:border-gray-700">
-                      <Link to={`/inventory/edit/${product.id}`} className="flex-1 flex items-center justify-center p-1.5 text-blue-600 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/40 rounded text-[10px] font-black uppercase transition-colors">
-                        <Edit className="w-3 h-3 mr-1" /> Editar
-                      </Link>
-                      <button
-                        onClick={() => {
-                          setSpyProductData({ name: product.name, price: Number(product.sale_price) });
-                          setIsSpyModalOpen(true);
-                        }}
-                        className="flex-1 flex items-center justify-center p-1.5 text-indigo-600 bg-indigo-50 dark:bg-indigo-900/20 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 rounded text-[10px] font-black uppercase transition-colors"
-                        title="Análise de Mercado"
-                      >
-                        <Brain className="w-3 h-3 mr-1" /> Market IA
-                      </button>
-                      <button
-                        onClick={() => {
-                          const templateData = {
-                            product: product.name,
-                            price: product.sale_price,
-                            image: product.image,
-                            description: product.description,
-                            stock: product.quantity
-                          };
-                          const msg = communicationService.getTemplate('oferta', templateData, company.name);
-                          communicationService.openWhatsApp('', msg, templateData, true, company.name);
-                          toast.success('Pronto! Dê Ctrl+V e Enter no WhatsApp para enviar o anúncio.', { duration: 6000, icon: '🚀' });
-                        }}
-                        className="flex-1 flex items-center justify-center p-1.5 text-green-600 bg-green-50 dark:bg-green-900/20 hover:bg-green-100 dark:hover:bg-green-900/40 rounded text-[10px] font-black uppercase transition-colors"
-                      >
-                        <ShoppingCart className="w-3 h-3 mr-1" /> Oferta
-                      </button>
-                      <button onClick={() => handleDeleteProduct(product.id!, product.name)} className="p-1.5 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors" title="Excluir">
-                        <Trash2 className="w-3 h-3" />
-                      </button>
-                    </div>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-12 text-gray-400">Nenhum produto encontrado.</div>
-          )}
+          <ProductListMemo
+            isLoading={isLoading}
+            filteredProducts={filteredProducts}
+            selectedProducts={selectedProducts}
+            onToggleSelection={toggleProductSelection}
+            onQuickStockUpdate={handleQuickStockUpdate}
+            onDeleteProduct={handleDeleteProduct}
+            onOpenSpyModal={(data) => {
+              setSpyProductData(data);
+              setIsSpyModalOpen(true);
+            }}
+          />
         </div>
       </div>
     </div>
